@@ -1,4 +1,4 @@
-import React from 'react'
+
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { useNavigate } from 'react-router'
@@ -39,12 +39,12 @@ const StartPage = () => {
                         </h3>
 
                     </div>
-                    <div className='flex flex-row items-center justify-center px-10'>
+                    <div className='flex flex-row items-center justify-center px-10 '>
                         <div className='flex flex-col relative my-50 '>
                             <hr className="w-48 h-1 bg-linear-to-r from-orange-400 via-orange-300 to-pink-400 border-0 rounded-sm  " />
                             <h2 className='text-white text-2xl font-bold my-4'>ĐĂNG NHẬP NGAY</h2>
-                            <h3 className=' text-x text-gray-400 mb-4'>Đăng nhập để truy cập vào các tiện ích học tập</h3>
-                            <button type="button" onClick={() => navigate("/signin")} class="text-white bg-linear-to-br from-pink-500 to-orange-400 hover:bg-linear-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 w-xs ">Đăng nhập</button>
+                            <h3 className=' text-x text-gray-400 mb-4'>TVCID là tài khoản dùng chung cho tất cả trong hệ thống LMS</h3>
+                            <button type="button" onClick={() => navigate("/signin")} className="text-white bg-linear-to-br from-pink-500 to-orange-400 hover:bg-linear-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 w-xs ">Đăng nhập bằng tài khoản TVCID</button>
                         </div>
                         <div className='flex relative my-50'>
                             <img src="DIYLogo.png" alt="Image" className='h-70 w-auto' ></img>
@@ -58,7 +58,7 @@ const StartPage = () => {
             <Footer />
 
             {/* Hiệu ứng animation */}
-            <style jsx>{`
+            <style >{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }

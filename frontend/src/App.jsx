@@ -5,18 +5,18 @@ import { Toaster } from 'sonner'
 function App() {
 
   return <>
-    <Toaster />
+    <Toaster richColors />
     <BrowserRouter>
       <Routes>
         {/* public route */}
         <Route
           path='/'
           element={<StartPage />}
-        ></Route>
+        />
         <Route
           path='/signin'
           element={<SignInPage />}
-        ></Route>
+        />
       </Routes>
       {/* protected route */}
     </BrowserRouter>
