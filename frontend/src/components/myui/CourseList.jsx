@@ -1,0 +1,108 @@
+import React from 'react'
+
+// Styles và pattern như bạn đã có
+const courseStyles = [
+    { color: 'bg-blue-500', pattern: 'hexagon', patternOpacity: 0.15 },
+    { color: 'bg-purple-500', pattern: 'diamond', patternOpacity: 0.2 },
+    { color: 'bg-teal-400', pattern: 'circles', patternOpacity: 0.12 },
+    { color: 'bg-gray-400', pattern: 'hexagon', patternOpacity: 0.18 },
+    { color: 'bg-green-500', pattern: 'diamond', patternOpacity: 0.15 },
+    { color: 'bg-pink-500', pattern: 'circles', patternOpacity: 0.2 },
+    { color: 'bg-orange-500', pattern: 'hexagon', patternOpacity: 0.16 },
+    { color: 'bg-indigo-500', pattern: 'diamond', patternOpacity: 0.14 },
+]
+
+// Mock data bạn dùng test
+const mockCourses = [
+    {
+        title: "[243] ITEC1427 - Cấu trúc dữ liệu và thuật giải",
+        lecturer: "Nguyễn Văn A"
+    },
+    {
+        title: "[243] ITEC4408 - Quản lý dự án phần mềm",
+        lecturer: "Nguyễn Văn A"
+    },
+    {
+        title: "[256] MATH101 - Giải tích 1",
+        lecturer: "Nguyễn Văn A"
+    },
+    {
+        title: "[278] ENGL202 - Phương pháp nghiên cứu khoa học xã hội ứng dụng trong phát triển cộng đồng",
+        lecturer: "Nguyễn Văn A"
+    },
+]
+
+// SVG Patterns
+const HexagonPattern = ({ id, opacity }) => (
+    <pattern id={id} width="100" height="87" patternUnits="userSpaceOnUse">
+        <path d="M50 0L93.3 25L93.3 62L50 87L6.7 62L6.7 25Z" fill="currentColor" opacity={opacity} />
+        <path d="M0 43.5L43.3 18.5L43.3 56L0 81Z" fill="currentColor" opacity={opacity * 0.6} />
+    </pattern>
+)
+
+const DiamondPattern = ({ id, opacity }) => (
+    <pattern id={id} width="80" height="80" patternUnits="userSpaceOnUse">
+        <path d="M40 0L80 40L40 80L0 40Z" fill="currentColor" opacity={opacity} />
+        <path d="M40 20L60 40L40 60L20 40Z" fill="currentColor" opacity={opacity * 0.5} />
+    </pattern>
+)
+
+const CirclesPattern = ({ id, opacity }) => (
+    <pattern id={id} width="100" height="100" patternUnits="userSpaceOnUse">
+        <circle cx="25" cy="25" r="20" fill="currentColor" opacity={opacity} />
+        <circle cx="75" cy="75" r="25" fill="currentColor" opacity={opacity * 0.7} />
+        <circle cx="75" cy="25" r="15" fill="currentColor" opacity={opacity * 0.5} />
+    </pattern>
+)
+
+
+const CourseCard = ({ title, lecturer, index }) => {
+    const style = courseStyles[index % courseStyles.length]
+    const patternId = `pattern-${index}`
+
+    const renderPattern = () => {
+        switch (style.pattern) {
+            case 'hexagon': return <HexagonPattern id={patternId} opacity={style.patternOpacity} />
+            case 'diamond': return <DiamondPattern id={patternId} opacity={style.patternOpacity} />
+            case 'circles': return <CirclesPattern id={patternId} opacity={style.patternOpacity} />
+            default: return <CirclesPattern id={patternId} opacity={style.patternOpacity} />
+        }
+    }
+
+    return (
+        <a className='block' href='/'>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 h-60 mx-2">
+                <div className={`h-32 relative overflow-hidden ${style.color}`}>
+                    <svg className="absolute inset-0 w-full h-full text-white" >
+                        <defs>{renderPattern()}</defs>
+                        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+                    </svg>
+                </div>
+                <div className="p-4">
+                    <h3 className="font-medium text-blue-600 mb-2 hover:underline cursor-pointer line-clamp-2 text-base">
+                        {title}
+                    </h3>
+                    <p className="text-sm text-gray-700">{lecturer}</p>
+                </div>
+            </div>
+        </a>
+    )
+}
+
+// Component danh sách nhiều khóa học
+const CourseList = () => {
+    return (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 space-y-6">
+            {mockCourses.map((course, index) => (
+                <CourseCard
+                    key={index}
+                    title={course.title}
+                    lecturer={course.lecturer}
+                    index={index}
+                />
+            ))}
+        </div>
+    )
+}
+
+export default CourseList

@@ -73,6 +73,9 @@ export function LoginForm({
               </div>
               {/*Nut Dang Nhap */}
               <Button type="submit" className="w-full" disabled={isSubmitting} >Đăng nhập</Button>
+              <div className="text-center text-sm">Muốn quay lại trang chủ?{" "}
+                <a href="/" className="underline underline-offset-2" > Trang chủ</a>
+              </div>
             </div>
           </form>
           <div className="bg-white relative hidden md:block">
