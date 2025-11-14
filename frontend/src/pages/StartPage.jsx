@@ -1,4 +1,4 @@
-
+import ScrollToTop from '@/components/myui/ScrollToTop'
 import Header from '@/components/base/Header'
 import Footer from '@/components/base/Footer'
 import { useNavigate } from 'react-router'
@@ -53,7 +53,7 @@ const StartPage = () => {
                 </section>
 
             </main>
-
+            <ScrollToTop />
             {/* Footer */}
             <Footer />
 
