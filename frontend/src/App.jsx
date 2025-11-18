@@ -1,8 +1,10 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import StartPage from './pages/StartPage'
 import SignInPage from './pages/SignInPage'
-import { Toaster } from 'sonner'
 import MyCoursePage from './pages/MyCoursePage'
+import MyContent from './pages/MyContent'
+import { Toaster } from 'sonner'
+
 function App() {
 
   return <>
@@ -23,6 +25,10 @@ function App() {
         <Route
           path='/mycourse'
           element={<MyCoursePage />}
+        />
+        <Route
+          path='/mycontent'
+          element={<MyContent />}
         />
       </Routes>
     </BrowserRouter>

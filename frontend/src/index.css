@@ -163,6 +163,20 @@ h1 {
   background-color: #BDBDBD;
 }
 
+.accordion-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+
+.accordion-open {
+  max-height: 1000px;
+  /* đủ lớn để chứa nội dung */
+  opacity: 1;
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
