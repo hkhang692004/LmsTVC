@@ -4,6 +4,8 @@ import SignInPage from './pages/SignInPage'
 import MyCoursePage from './pages/MyCoursePage'
 import MyContent from './pages/MyContent'
 import { Toaster } from 'sonner'
+import Forum from './pages/Forum'
+import Directory from './pages/Directory'
 
 function App() {
 
@@ -29,6 +31,14 @@ function App() {
         <Route
           path='/mycontent'
           element={<MyContent />}
+        />
+        <Route
+        path='/forum'
+        element={<Forum/>}
+        />
+        <Route
+        path='/directory'
+        element={<Directory/>}
         />
       </Routes>
     </BrowserRouter>
