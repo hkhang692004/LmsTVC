@@ -6,11 +6,11 @@ const Chat = sequelize.define('Chat', {
         allowNull: false,
         primaryKey: true
     },
-    nguoiGui: {
+    idNguoiGui: {
         type: Sequelize.STRING,
         allowNull: false
     },
-    nguoiNhan: {
+    idNguoiNhan: {
         type: Sequelize.STRING,
         allowNull: false
     },

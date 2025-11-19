@@ -1,5 +1,6 @@
-import express from "express";
-import UserController from "../controllers/userController.js";
+import router from "./index.js";
+import UserController from "../controllers/nguoiDungController.js";
+import e from "express";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.delete("/:id", UserController.deleteUser);
 router.get("/:id/profile", UserController.getUserProfile);
 router.get("/:id/classes", UserController.getUserClasses);
 router.post("/login", UserController.loginUser);
+
 
 export default router;
