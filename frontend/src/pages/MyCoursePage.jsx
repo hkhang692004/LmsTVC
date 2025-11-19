@@ -5,7 +5,9 @@ import CourseList from '@/components/myui/CourseList'
 import ScrollToTop from '@/components/myui/ScrollToTop'
 import React from 'react'
 
+
 const MyCoursePage = () => {
+
     return (
         <>
             {/*Fixed Header */}

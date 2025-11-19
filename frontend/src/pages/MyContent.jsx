@@ -5,9 +5,12 @@ import ScrollToTop from '@/components/myui/ScrollToTop'
 import ContentList from '@/components/myui/ContentList'
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
 import mockSections from '@/mocks/mockSections'
+import { useLocation } from 'react-router-dom'
 
 const MyContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation();
+  const courseName = location.state?.courseName;
 
   return (
     <>
@@ -32,11 +35,11 @@ const MyContent = () => {
             <div className="flex flex-col my-10 lg:my-20 space-y-6">
               <div>
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
-                  Course Title
+                  {`${courseName}`}
                 </h2>
               </div>
               <div className='border rounded-lg border-gray-300 p-4'>
-                <ContentList />
+                <ContentList courseName={courseName}/>
               </div>
             </div>
           </div>

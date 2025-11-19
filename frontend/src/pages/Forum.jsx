@@ -4,10 +4,12 @@ import mockSections from '@/mocks/mockSections'
 import MyHeader from '@/components/myui/MyHeader'
 import MyFooter from '@/components/myui/MyFooter'
 import ScrollToTop from '@/components/myui/ScrollToTop'
+import {useLocation} from "react-router-dom"
 
 const Forum = () => {
-
-     const [sidebarOpen, setSidebarOpen] = useState(false)
+      const location = useLocation();
+      const title = location.state?.title;  
+       const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
  <>
       {/* Fixed Header */}
@@ -31,7 +33,7 @@ const Forum = () => {
             <div className="flex flex-col my-10 lg:my-20 space-y-6">
               <div>
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
-                  Course Title
+                  {`${title}`}
                 </h2>
               </div>
               <div className=' p-4'>

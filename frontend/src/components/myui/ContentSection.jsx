@@ -4,7 +4,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import ContentItem from "./ContentItem";
 
 
-const ContentSection = ({ title, items }) => {
+const ContentSection = ({ title, items, courseName }) => {
     const [open, setOpen] = useState(true);
 
     return (
@@ -49,7 +49,7 @@ const ContentSection = ({ title, items }) => {
                                 </p>
                             ) : (
                                 items.map((item) => (
-                                    <ContentItem key={item.id} item={item} />
+                                    <ContentItem key={item.id} item={item} courseName={courseName} title={title} />
                                 ))
                             )}
                         </div>

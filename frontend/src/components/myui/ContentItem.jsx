@@ -7,6 +7,7 @@ import { FaLink } from "react-icons/fa6";
 import { LuFileQuestion } from "react-icons/lu";
 import { FaFilePen } from "react-icons/fa6";
 import { PiMicrosoftWordLogoFill } from "react-icons/pi";
+import {useNavigate} from "react-router-dom"
 
 const getIcon = (type) => {
     switch (type) {
@@ -33,9 +34,36 @@ const getIcon = (type) => {
     }
 };
 
-const ContentItem = ({ item }) => {
+const ContentItem = ({ item, courseName,title }) => {
+    const navigate = useNavigate();
+    const handleClick= () =>{
+        switch(item.loai)
+    {
+        case "folder":
+            navigate("/directory",{
+                state:{
+                folderName : item.ten,
+                title: title,
+                courseName: courseName
+            }
+        });
+            break;
+        case "diendan":
+            navigate("/forum",{
+                state:{
+                    title:item.ten
+                }
+        });
+    }
+}
+
+        
+
+    
     return (
-        <div className="flex items-center py-6 px-6 hover:bg-gray-50 cursor-pointer border-t">
+        <div 
+        onClick={handleClick}
+        className="flex items-center py-6 px-6 hover:bg-gray-50 cursor-pointer border-t">
             {getIcon(item.loai)}
 
             <h2 className="ml-3 text-x text-blue-500 font-medium hover:underline">
