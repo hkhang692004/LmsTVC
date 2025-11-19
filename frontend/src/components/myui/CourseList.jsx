@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { useNavigate } from 'react-router-dom'
 // Styles và pattern như bạn đã có
 const courseStyles = [
     { color: 'bg-blue-500', pattern: 'hexagon', patternOpacity: 0.15 },
@@ -59,6 +59,16 @@ const CirclesPattern = ({ id, opacity }) => (
 const CourseCard = ({ title, lecturer, index }) => {
     const style = courseStyles[index % courseStyles.length]
     const patternId = `pattern-${index}`
+    const navigate = useNavigate();
+    const handleClick = () =>{
+        navigate("/mycontent",{
+                state:{
+                    courseName: title
+                }
+
+        })
+
+    }
 
     const renderPattern = () => {
         switch (style.pattern) {
@@ -70,7 +80,7 @@ const CourseCard = ({ title, lecturer, index }) => {
     }
 
     return (
-        <a className='block' href='/'>
+        <a className='block' onClick={handleClick}>
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 h-60 mx-2">
                 <div className={`h-32 relative overflow-hidden ${style.color}`}>
                     <svg className="absolute inset-0 w-full h-full text-white" >

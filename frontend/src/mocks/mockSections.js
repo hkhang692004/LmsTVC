@@ -39,7 +39,9 @@ const mockSections = [
         title: "Mẫu báo cáo",
         items: [
 
-            { id: 110, ten: "File word báo cáo ", loai: "word" }
+            { id: 110, ten: "File word báo cáo ", loai: "word" },
+            { id: 111, ten: "File word báo cáo ", loai: "word" },
+            { id: 112, ten: "File word báo cáo ", loai: "word" }
         ]
     }
 ];
