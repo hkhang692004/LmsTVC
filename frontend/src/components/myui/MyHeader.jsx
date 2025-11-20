@@ -8,7 +8,7 @@ const MyHeader = () => {
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-blue-500 py-2 shadow-md">
-            <div className="flex items-center justify-between max-w-7xl mx-auto px-6">
+            <div className="flex justify-between items-center max-w-8xl mx-7 px-6">
                 {/* Left: Text */}
                 <a href="/mycourse" className="block w-fit">
                     <div className="flex flex-row items-center gap-2">

@@ -11,6 +11,7 @@ const MyContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation();
   const courseName = location.state?.courseName;
+  
 
   return (
     <>

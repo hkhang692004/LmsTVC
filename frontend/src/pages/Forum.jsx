@@ -5,10 +5,15 @@ import MyHeader from '@/components/myui/MyHeader'
 import MyFooter from '@/components/myui/MyFooter'
 import ScrollToTop from '@/components/myui/ScrollToTop'
 import {useLocation} from "react-router-dom"
+import  {MdOutlineChat}  from "react-icons/md";
+import Breadcrumb from '@/components/myui/Breadcrump'
 
 const Forum = () => {
       const location = useLocation();
       const title = location.state?.title;  
+      const courseName = location.state?.courseName;
+
+
        const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
  <>
@@ -31,14 +36,18 @@ const Forum = () => {
           className={`flex-1 min-h-screen transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-0'}`}>
           <div className='w-full space-y-6 px-4 lg:px-10'>
             <div className="flex flex-col my-10 lg:my-20 space-y-6">
-              <div>
+                            <Breadcrumb
+        courseName={courseName}
+        itemName={title}
+              />
+              <div className='flex items-center space-x-3'>
+              <MdOutlineChat className="text-pink-400 w-8 h-8"/>
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
                   {`${title}`}
                 </h2>
+            
               </div>
-              <div className=' p-4'>
-               
-              </div>
+
             </div>
           </div>
         </div>

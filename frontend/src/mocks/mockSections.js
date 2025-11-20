@@ -5,7 +5,7 @@ const mockSections = [
         items: [
             { id: 101, ten: "DANH SÁCH CẤM THI MÔN HỌC - Ngày đăng 15/11/2025", loai: "pdf" },
             { id: 102, ten: "Thông tin điểm danh môn học", loai: "pdf" },
-            { id: 103, ten: "Điểm danh buổi trực tuyến", loai: "folder" },
+            
             { id: 104, ten: "Lịch học Lý Thuyết dự kiến môn OOP", loai: "pdf" }
         ]
     },
@@ -13,8 +13,10 @@ const mockSections = [
         id: 2,
         title: "Thông báo",
         items: [
+            
             { id: 105, ten: "Lịch học Lý Thuyết dự kiến môn OOP", loai: "text" },
             { id: 106, ten: "Nộp bài OOP", loai: "nopbai" },
+            { id: 103, ten: "Điểm danh buổi trực tuyến", loai: "folder" },
             { id: 107, ten: "Đường dẫn tải VS Code", loai: "duongdan" }
         ]
     },

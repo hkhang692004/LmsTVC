@@ -49,7 +49,7 @@ const ContentSection = ({ title, items, courseName }) => {
                                 </p>
                             ) : (
                                 items.map((item) => (
-                                    <ContentItem key={item.id} item={item} courseName={courseName} title={title} />
+                                    <ContentItem key={item.id} item={item} courseName={courseName}  />
                                 ))
                             )}
                         </div>

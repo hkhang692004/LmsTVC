@@ -34,7 +34,7 @@ const getIcon = (type) => {
     }
 };
 
-const ContentItem = ({ item, courseName,title }) => {
+const ContentItem = ({ item, courseName }) => {
     const navigate = useNavigate();
     const handleClick= () =>{
         switch(item.loai)
@@ -43,7 +43,6 @@ const ContentItem = ({ item, courseName,title }) => {
             navigate("/directory",{
                 state:{
                 folderName : item.ten,
-                title: title,
                 courseName: courseName
             }
         });
@@ -51,9 +50,11 @@ const ContentItem = ({ item, courseName,title }) => {
         case "diendan":
             navigate("/forum",{
                 state:{
-                    title:item.ten
+                    title:item.ten,
+                    courseName: courseName
                 }
         });
+        break;
     }
 }
 

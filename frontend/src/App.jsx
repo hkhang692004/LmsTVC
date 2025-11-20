@@ -6,12 +6,15 @@ import MyContent from './pages/MyContent'
 import { Toaster } from 'sonner'
 import Forum from './pages/Forum'
 import Directory from './pages/Directory'
+import ScrollOnChange from './components/myui/ScrollOnChange'
 
 function App() {
 
   return <>
+    
     <Toaster richColors />
     <BrowserRouter>
+    <ScrollOnChange/>
       <Routes>
         {/* public route */}
         <Route
