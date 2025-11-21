@@ -33,11 +33,12 @@ const Breadcrumb = ({ courseName, itemName }) => {
             </span>
             </a>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-600" />
-
+            
             {/* Current page highlight */}
             <span className="text-lg bg-blue-600 text-white px-3 py-1 rounded-full ">
                 {itemName}
             </span>
+        
         </div>
     );
 };

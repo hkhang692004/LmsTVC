@@ -13,7 +13,7 @@ const courseStyles = [
     { color: 'bg-indigo-500', pattern: 'diamond', patternOpacity: 0.14 },
 ]
 
-// Mock data bạn dùng test
+
 
 
 // SVG Patterns
