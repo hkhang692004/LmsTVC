@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import Forum from './pages/Forum'
 import Directory from './pages/Directory'
 import ScrollOnChange from './components/myui/ScrollOnChange'
+import ForumContent from './pages/ForumContent'
 
 function App() {
 
@@ -42,6 +43,10 @@ function App() {
         <Route
         path='/directory'
         element={<Directory/>}
+        />
+                <Route
+        path='/forumcontent'
+        element={<ForumContent/>}
         />
       </Routes>
     </BrowserRouter>

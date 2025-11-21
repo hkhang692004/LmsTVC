@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import mockCourses from '@/mocks/mockCourse'
 // Styles và pattern như bạn đã có
 const courseStyles = [
     { color: 'bg-blue-500', pattern: 'hexagon', patternOpacity: 0.15 },
@@ -13,24 +14,7 @@ const courseStyles = [
 ]
 
 // Mock data bạn dùng test
-const mockCourses = [
-    {
-        title: "[243] ITEC1427 - Cấu trúc dữ liệu và thuật giải",
-        lecturer: "Nguyễn Văn A"
-    },
-    {
-        title: "[243] ITEC4408 - Quản lý dự án phần mềm",
-        lecturer: "Nguyễn Văn A"
-    },
-    {
-        title: "[256] MATH101 - Giải tích 1",
-        lecturer: "Nguyễn Văn A"
-    },
-    {
-        title: "[278] ENGL202 - Phương pháp nghiên cứu khoa học xã hội ứng dụng trong phát triển cộng đồng",
-        lecturer: "Nguyễn Văn A"
-    },
-]
+
 
 // SVG Patterns
 const HexagonPattern = ({ id, opacity }) => (

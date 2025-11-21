@@ -43,7 +43,8 @@ const ContentItem = ({ item, courseName }) => {
             navigate("/directory",{
                 state:{
                 folderName : item.ten,
-                courseName: courseName
+                courseName: courseName,
+                type:item.loai
             }
         });
             break;
@@ -51,7 +52,8 @@ const ContentItem = ({ item, courseName }) => {
             navigate("/forum",{
                 state:{
                     title:item.ten,
-                    courseName: courseName
+                    courseName: courseName,
+                    text: item.text
                 }
         });
         break;
