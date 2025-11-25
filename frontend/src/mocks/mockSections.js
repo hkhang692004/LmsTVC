@@ -1,63 +1,101 @@
 const mockSections = [
-    {
-        id: 1,
-        title: "Chung",
-        items: [
-            { id: 101, ten: "DANH SÁCH CẤM THI MÔN HỌC - Ngày đăng 15/11/2025", loai: "pdf" ,text:""},
-            { id: 102, ten: "Thông tin điểm danh môn học", loai: "pdf" ,text:""},
-            
-            { id: 104, ten: "Lịch học Lý Thuyết dự kiến môn OOP", loai: "pdf",text:"" }
-        ]
-    },
-    {
-        id: 2,
-        title: "Thông báo",
-        items: [
-            
-            { id: 105, ten: "Lịch học Lý Thuyết dự kiến môn OOP", loai: "text" , text:""},
-            { id: 106, ten: "Nộp bài OOP", loai: "nopbai", text:"" },
-            { id: 103, ten: "Điểm danh buổi trực tuyến", loai: "folder", text:"" },
-            { id: 107, ten: "Đường dẫn tải VS Code", loai: "duongdan", text:"" }
-        ]
-    },
-    {
-        id: 3,
-        title: "Diễn đàn môn học",
-        items: [
+  {
+    id: 1,
+    title: "Chung",
+    items: [
+      { 
+        id: 101, 
+        ten: "DANH SÁCH CẤM THI MÔN HỌC - Ngày đăng 15/11/2025", 
+        loai: "pdf",
+        url: "https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf" 
+      },
+      { 
+        id: 102, 
+        ten: "Thông tin điểm danh môn học", 
+        loai: "pdf",
+        url: "https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf" // 
+      },
+      { 
+        id: 104, 
+        ten: "Lịch học Lý Thuyết dự kiến môn OOP", 
+        loai: "pdf",
+        url: "https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf" // 
+      }
+    ]
+  },
+  {
+    id: 2,
+    title: "Thông báo",
+    items: [
+      { id: 105, ten: "Lịch học Lý Thuyết dự kiến môn OOP", loai: "text",text:`Chào cả lớp,
 
-            { id: 108, ten: "Diễn đàn môn học ", loai: "diendan", text:`
-    Sinh viên sử dụng diễn đàn để trao đổi bài tập nhóm, thảo luận, liên hệ với giảng viên.
+Thầy nhắc lại một chút lịch học thực hành buổi 6 và lịch thi giữa kỳ, như sau:
+
+Ngày 19/08/2025: cả 2 nhóm thực hành buổi 6 (Nhóm 1 từ 13h00, Nhóm 2 từ 15h00)
+Ngày 26/08/2025: THI GIỮA KỲ
+Nhóm 1: Từ 13h00
+Nhóm 2: Từ 15h00
+Nội dung: từ chương đầu đến cây nhị phân tìm kiếm (bao gồm lý thuyết cây AVL)
+Lưu ý: SV có mặt tại phòng thi trước 15 phút và KHÔNG được sử dụng tài liệu
+`,url:"" },
+      { id: 106, ten: "Nộp bài OOP", loai: "nopbai" ,url:""},
+      { id: 103, ten: "Điểm danh buổi trực tuyến", loai: "folder" ,url:""},
+      { id: 107, ten: "Đường dẫn tải VS Code", loai: "duongdan" ,url:"https://code.visualstudio.com/download"}
+    ]
+  },
+  {
+    id: 3,
+    title: "Diễn đàn môn học",
+    items: [
+      { 
+        id: 108, 
+        ten: "Diễn đàn môn học ", 
+        loai: "diendan", 
+        text: `
+Sinh viên sử dụng diễn đàn để trao đổi bài tập nhóm, thảo luận, liên hệ với giảng viên.
 
 Lưu ý:
 
 Giảng viên không trả lời các thắc mắc qua email cá nhân! 
 
-Để đặt câu hỏi, thắc mắc về môn học,.. với giảng viên:  Sinh viên cần đặt câu hỏi trong diễn đàn (tự tạo 1 chủ đề với tiêu đề ngắn gọn nhưng khá rõ nghĩa) sau đó ghi nội dung câu hỏi, đính kèm hình ảnh, ... Sau đó gửi GV 1 email thông báo cho biết có câu hỏi trên diễn đàn. Gv sẽ vào trả lời trong diễn đàn. Việc làm này sẽ giúp cho các sinh viên khác có thể tham khảo, hiểu thêm các vấn đề mà họ cũng gặp phải!!
+... (giữ nguyên nội dung)
 
-Sinh viên có toàn quyền tạo chủ đề và upload/post các thông tin/câu hỏi/hình ảnh (file upload<50MB) để thảo luận, trao đổi, thắc mắc với GV/SV.
-
-Trong trường hợp GV yêu cầu sử dụng diển đàn để nộp bài: Sinh viên/Nhóm SV cần  vào đúng  thread/topic/chủ đề qui định để nộp bài 
-
-Email giảng viên:  dat.nt@ou.edu.vn` }
-        ]
-    },
-    {
-        id: 4,
-        title: "Bài kiểm tra",
-        items: [
-
-            { id: 109, ten: "Kiểm tra ", loai: "kiemtra" , text:""}
-        ]
-    },
-    {
-        id: 5,
-        title: "Mẫu báo cáo",
-        items: [
-
-            { id: 110, ten: "File word báo cáo ", loai: "word", text:"" },
-            { id: 111, ten: "File word báo cáo ", loai: "word" , text:""},
-            { id: 112, ten: "File word báo cáo ", loai: "word", text:"" }
-        ]
-    }
+        `
+    ,url:""
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: "Bài kiểm tra",
+    items: [
+      { id: 109, ten: "Kiểm tra ", loai: "kiemtra" ,url:""}
+    ]
+  },
+  {
+    id: 5,
+    title: "Mẫu báo cáo",
+    items: [
+      { 
+        id: 110, 
+        ten: "File word báo cáo", 
+        loai: "word",
+        url: "https://res.cloudinary.com/dblzpkokm/raw/upload/v1764058654/ThucHanh9-GiamSatHeThong_usxryd.docx"
+      },
+      { 
+        id: 111, 
+        ten: "File word báo cáo", 
+        loai: "word",
+        url: "https://res.cloudinary.com/dblzpkokm/raw/upload/v1764058654/ThucHanh9-GiamSatHeThong_usxryd.docx"
+      },
+      { 
+        id: 112, 
+        ten: "File word báo cáo", 
+        loai: "word",
+        url: "https://res.cloudinary.com/dblzpkokm/raw/upload/v1764058654/ThucHanh9-GiamSatHeThong_usxryd.docx"
+      }
+    ]
+  }
 ];
+
 export default mockSections;

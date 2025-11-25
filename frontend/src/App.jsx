@@ -8,14 +8,15 @@ import Forum from './pages/Forum'
 import Directory from './pages/Directory'
 import ScrollOnChange from './components/myui/ScrollOnChange'
 import ForumContent from './pages/ForumContent'
+import Text from './pages/Text'
 
 function App() {
 
   return <>
-    
+
     <Toaster richColors />
     <BrowserRouter>
-    <ScrollOnChange/>
+      <ScrollOnChange />
       <Routes>
         {/* public route */}
         <Route
@@ -37,16 +38,20 @@ function App() {
           element={<MyContent />}
         />
         <Route
-        path='/forum'
-        element={<Forum/>}
+          path='/forum'
+          element={<Forum />}
         />
         <Route
-        path='/directory'
-        element={<Directory/>}
+          path='/directory'
+          element={<Directory />}
+        />
+        <Route
+          path='/forumcontent'
+          element={<ForumContent />}
         />
                 <Route
-        path='/forumcontent'
-        element={<ForumContent/>}
+          path='/text'
+          element={<Text/>}
         />
       </Routes>
     </BrowserRouter>
