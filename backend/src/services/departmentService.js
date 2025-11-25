@@ -1,33 +1,32 @@
 import DepartmentRepository from "../repositories/departmentRepository.js";
+import { ValidationError, NotFoundError } from "../utils/errors.js";
 
 class DepartmentService {
     async getAllDepartments(filters) {
-        try {
-            this.validateFilters(filters);
-            return await DepartmentRepository.findWithFilters(filters);
-        } catch (error) {
-            throw error;
-        }
+        this.validateFilters(filters);
+        return await DepartmentRepository.findWithFilters(filters);
     }
 
     async getDepartmentById(id) {
-        try {
-            if (!id) {
-                throw new Error('ID ngành là bắt buộc');
-            }
-            return await DepartmentRepository.findById(id);
-        } catch (error) {
-            throw error;
+        if (!id) {
+            throw new ValidationError('ID ngành là bắt buộc');
         }
+        
+        const department = await DepartmentRepository.findById(id);
+        if (!department) {
+            throw new NotFoundError('Không tìm thấy ngành học');
+        }
+        
+        return department;
     }
 
     validateFilters(filters) {
         if (filters.limit > 100) {
-            throw new Error('Không thể lấy quá 100 bản ghi cùng lúc');
+            throw new ValidationError('Không thể lấy quá 100 bản ghi cùng lúc', 'limit');
         }
 
         if (filters.page < 1) {
-            throw new Error('Trang phải lớn hơn 0');
+            throw new ValidationError('Trang phải lớn hơn 0', 'page');
         }
     }
 }

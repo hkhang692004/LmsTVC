@@ -1,5 +1,6 @@
 import { HocKy, NamHoc } from '../models/index.js';
 import { Op } from 'sequelize';
+import { DatabaseError } from '../utils/errors.js';
 
 class SemesterRepository {
     async findWithFilters(filters) {
@@ -50,7 +51,7 @@ class SemesterRepository {
 
         } catch (error) {
             console.error('Database error in findWithFilters:', error);
-            throw new Error('Lỗi khi truy vấn cơ sở dữ liệu');
+            throw new DatabaseError('Lỗi khi truy vấn học kỳ từ cơ sở dữ liệu');
         }
     }
 
@@ -75,7 +76,7 @@ class SemesterRepository {
             return hocKy ? this.mapToDTO(hocKy) : null;
         } catch (error) {
             console.error('Database error in findCurrent:', error);
-            throw new Error('Lỗi khi tìm học kỳ hiện tại');
+            throw new DatabaseError('Lỗi khi tìm học kỳ hiện tại từ cơ sở dữ liệu');
         }
     }
 
@@ -93,7 +94,7 @@ class SemesterRepository {
             return hocKy ? this.mapToDTO(hocKy) : null;
         } catch (error) {
             console.error('Database error in findById:', error);
-            throw new Error('Lỗi khi tìm học kỳ');
+            throw new DatabaseError('Lỗi khi tìm học kỳ từ cơ sở dữ liệu');
         }
     }
 

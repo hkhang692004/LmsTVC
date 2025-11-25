@@ -1,41 +1,40 @@
 import YearRepository from "../repositories/yearRepository.js";
+import { ValidationError, NotFoundError } from "../utils/errors.js";
 
 class YearService {
     async getAllYears(filters) {
-        try {
-            this.validateFilters(filters);
-            return await YearRepository.findWithFilters(filters);
-        } catch (error) {
-            throw error;
-        }
+        this.validateFilters(filters);
+        return await YearRepository.findWithFilters(filters);
     }
 
     async getCurrentYear() {
-        try {
-            return await YearRepository.findCurrent();
-        } catch (error) {
-            throw error;
+        const year = await YearRepository.findCurrent();
+        if (!year) {
+            throw new NotFoundError('Không tìm thấy năm học hiện tại');
         }
+        return year;
     }
 
     async getYearById(id) {
-        try {
-            if (!id) {
-                throw new Error('ID năm học là bắt buộc');
-            }
-            return await YearRepository.findById(id);
-        } catch (error) {
-            throw error;
+        if (!id) {
+            throw new ValidationError('ID năm học là bắt buộc');
         }
+        
+        const year = await YearRepository.findById(id);
+        if (!year) {
+            throw new NotFoundError('Không tìm thấy năm học');
+        }
+        
+        return year;
     }
 
     validateFilters(filters) {
         if (filters.limit > 100) {
-            throw new Error('Không thể lấy quá 100 bản ghi cùng lúc');
+            throw new ValidationError('Không thể lấy quá 100 bản ghi cùng lúc', 'limit');
         }
 
         if (filters.page < 1) {
-            throw new Error('Trang phải lớn hơn 0');
+            throw new ValidationError('Trang phải lớn hơn 0', 'page');
         }
     }
 }

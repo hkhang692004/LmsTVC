@@ -1,5 +1,6 @@
 import { Nganh } from '../models/index.js';
 import { Op } from 'sequelize';
+import { DatabaseError } from '../utils/errors.js';
 
 class DepartmentRepository {
     async findWithFilters(filters) {
@@ -37,7 +38,7 @@ class DepartmentRepository {
 
         } catch (error) {
             console.error('Database error in findWithFilters:', error);
-            throw new Error('Lỗi khi truy vấn cơ sở dữ liệu');
+            throw new DatabaseError('Lỗi khi truy vấn ngành học từ cơ sở dữ liệu');
         }
     }
 
@@ -50,7 +51,7 @@ class DepartmentRepository {
             return nganh ? this.mapToDTO(nganh) : null;
         } catch (error) {
             console.error('Database error in findById:', error);
-            throw new Error('Lỗi khi tìm ngành');
+            throw new DatabaseError('Lỗi khi tìm ngành học từ cơ sở dữ liệu');
         }
     }
 

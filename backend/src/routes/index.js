@@ -1,6 +1,6 @@
 import express from "express";
-import nguoiDungRoutes from "./nguoiDungRouters.js";
-import lopRoutes from "./lopRouters.js";
+import nguoiDungRoutes from "./userRouters.js";
+import classRoutes from "./classRouters.js";
 import contentRoutes from "./contentRouters.js";
 import examRoutes from "./examRouters.js";
 import submissionRoutes from "./submissionRouters.js";
@@ -22,7 +22,7 @@ router.use("/years", yearRoutes);                    // NamHoc
 router.use("/semesters", semesterRoutes);            // HocKy  
 router.use("/departments", departmentRoutes);        // Nganh
 router.use("/subjects", subjectRoutes);              // MonHoc
-router.use("/classes", lopRoutes);                   // Lop
+router.use("/classes", classRoutes);                   // Lop
 
 // Learning content - Topics & Contents
 router.use("/content", contentRoutes);               // Topics + Contents (NoiDung + NoiDungChiTiet)

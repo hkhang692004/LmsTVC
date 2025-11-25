@@ -6,6 +6,7 @@ import Nganh from "./nganh.js";
 import MonHoc from "./monHoc.js";
 import Lop from "./lop.js";
 import Lop_SinhVien from "./lopSinhVien.js";
+import ChuDe from "./chuDe.js";
 import NoiDung from "./noiDung.js";
 import NoiDungChiTiet from "./noiDungChiTiet.js";
 import BaiKiemTra from "./baiKiemTra.js";
@@ -60,6 +61,7 @@ Lop.belongsToMany(NguoiDung, {
     otherKey: 'idSinhVien',
     as: 'sinhViens' 
 });
+Lop.hasMany(ChuDe, { foreignKey: 'idLop', as: 'chuDes' });
 Lop.hasMany(BaiKiemTra, { foreignKey: 'idLop', as: 'baiKiemTras' });
 Lop.hasMany(LichHoatDong, { foreignKey: 'idLop', as: 'lichHoatDongs' });
 Lop.hasMany(ThongBao, { foreignKey: 'idLop', as: 'thongBaos' });
@@ -68,7 +70,12 @@ Lop.hasMany(ThongBao, { foreignKey: 'idLop', as: 'thongBaos' });
 Lop_SinhVien.belongsTo(Lop, { foreignKey: 'idLop', as: 'lop' });
 Lop_SinhVien.belongsTo(NguoiDung, { foreignKey: 'idSinhVien', as: 'sinhVien' });
 
+// ChuDe
+ChuDe.belongsTo(Lop, { foreignKey: 'idLop', as: 'lop' });
+ChuDe.hasMany(NoiDung, { foreignKey: 'idChuDe', as: 'noiDungs' });
+
 // NoiDung
+NoiDung.belongsTo(ChuDe, { foreignKey: 'idChuDe', as: 'chuDe' });
 NoiDung.belongsTo(NguoiDung, { foreignKey: 'idNguoiDung', as: 'nguoiTao' });
 NoiDung.hasMany(NoiDung, { foreignKey: 'idNoiDungCha', as: 'noiDungCon' });
 NoiDung.belongsTo(NoiDung, { foreignKey: 'idNoiDungCha', as: 'noiDungCha' });
@@ -139,6 +146,7 @@ export {
     MonHoc,
     Lop,
     Lop_SinhVien,
+    ChuDe,
     NoiDung,
     NoiDungChiTiet,
     BaiKiemTra,

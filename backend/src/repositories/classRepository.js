@@ -1,5 +1,6 @@
-import { Lop, HocKy, MonHoc, Nganh, NguoiDung, NamHoc, Lop_SinhVien, BaiKiemTra } from '../models/index.js';
+import { Lop, HocKy, MonHoc, Nganh, NguoiDung, NamHoc, Lop_SinhVien, BaiKiemTra, ChuDe, NoiDung, NoiDungChiTiet } from '../models/index.js';
 import { Op, Sequelize } from 'sequelize';
+import { DatabaseError } from '../utils/errors.js';
 
 class ClassRepository {
     async findWithFilters(filters) {
@@ -104,7 +105,7 @@ class ClassRepository {
 
         } catch (error) {
             console.error('Database error in findWithFilters:', error);
-            throw new Error('Lỗi khi truy vấn cơ sở dữ liệu');
+            throw new DatabaseError('Lỗi khi truy vấn lớp học từ cơ sở dữ liệu');
         }
     }
 
@@ -146,22 +147,152 @@ class ClassRepository {
                     {
                         model: HocKy,
                         as: 'hocKy',
-                        include: [{ model: NamHoc, as: 'namHoc' }]
+                        attributes: ['id', 'ten', 'ngayBatDau', 'ngayKetThuc'],
+                        include: [{ 
+                            model: NamHoc, 
+                            as: 'namHoc',
+                            attributes: ['id', 'nam']
+                        }]
                     },
-                    { model: NguoiDung, as: 'giangVien' },
+                    { 
+                        model: NguoiDung, 
+                        as: 'giangVien',
+                        attributes: ['id', 'ten', 'email']
+                    },
                     {
                         model: MonHoc,
                         as: 'monHoc',
-                        include: [{ model: Nganh, as: 'nganh' }]
+                        attributes: ['id', 'tenMon'],
+                        include: [{ 
+                            model: Nganh, 
+                            as: 'nganh',
+                            attributes: ['id', 'tenNganh']
+                        }]
+                    },
+                    // Thêm các chủ đề của lớp
+                    {
+                        model: ChuDe,
+                        as: 'chuDes',
+                        attributes: ['id', 'tenChuDe', 'moTa'],
+                        // Lấy các nội dung gốc của mỗi chủ đề
+                        include: [
+                            {
+                                model: NoiDung,
+                                as: 'noiDungs',
+                                attributes: [
+                                    'id', 'tieuDe', 'noiDung', 'loaiNoiDung', 
+                                    'hanNop', 'ngayNop', 'trangThai', 'ngayTao'
+                                ],
+                                where: {
+                                    idNoiDungCha: null // Chỉ lấy nội dung gốc (không có parent)
+                                },
+                                required: false, // LEFT JOIN để vẫn hiển thị chủ đề dù không có nội dung
+
+                                order: [['ngayTao', 'DESC']] // Nội dung mới nhất trước
+                            }
+                        ],
+                        order: [['tenChuDe', 'ASC']] // Sắp xếp chủ đề theo tên
                     }
+                ],
+                // Add statistics as computed fields
+                attributes: [
+                    'id', 'tenLop',
+                    // Đếm số sinh viên
+                    [
+                        Sequelize.literal(`(
+                            SELECT COUNT(*)
+                            FROM Lop_SinhVien ls 
+                            WHERE ls.idLop = Lop.id
+                        )`),
+                        'studentCount'
+                    ],
+                    // Đếm số bài kiểm tra
+                    [
+                        Sequelize.literal(`(
+                            SELECT COUNT(*)
+                            FROM BaiKiemTra bkt 
+                            WHERE bkt.idLop = Lop.id
+                        )`),
+                        'examCount'
+                    ],
+                    // Đếm tổng số chủ đề
+                    [
+                        Sequelize.literal(`(
+                            SELECT COUNT(*)
+                            FROM ChuDe cd 
+                            WHERE cd.idLop = Lop.id
+                        )`),
+                        'topicCount'
+                    ]
                 ]
             });
 
-            return lop ? this.mapToDTO(lop) : null;
+            if (!lop) {
+                return null;
+            }
+
+            // Map to detailed DTO with topics and content
+            return this.mapToDetailDTO(lop);
+
         } catch (error) {
             console.error('Database error in findById:', error);
-            throw new Error('Lỗi khi tìm lớp');
+            throw new DatabaseError('Lỗi khi tìm chi tiết lớp học từ cơ sở dữ liệu');
         }
+    }
+
+    // Map to detailed DTO for class detail page
+    mapToDetailDTO(lopRecord) {
+        return {
+            id: lopRecord.id,
+            tenLop: lopRecord.tenLop,
+            // Statistics
+            statistics: {
+                studentCount: parseInt(lopRecord.dataValues.studentCount) || 0,
+                examCount: parseInt(lopRecord.dataValues.examCount) || 0,
+                topicCount: parseInt(lopRecord.dataValues.topicCount) || 0
+            },
+            // Basic info
+            hocKy: {
+                id: lopRecord.hocKy.id,
+                ten: lopRecord.hocKy.ten,
+                ngayBatDau: lopRecord.hocKy.ngayBatDau,
+                ngayKetThuc: lopRecord.hocKy.ngayKetThuc,
+                namHoc: lopRecord.hocKy.namHoc.nam
+            },
+            giangVien: {
+                id: lopRecord.giangVien.id,
+                ten: lopRecord.giangVien.ten,
+                email: lopRecord.giangVien.email
+            },
+            monHoc: {
+                id: lopRecord.monHoc.id,
+                tenMon: lopRecord.monHoc.tenMon,
+                nganh: {
+                    id: lopRecord.monHoc.nganh.id,
+                    tenNganh: lopRecord.monHoc.nganh.tenNganh
+                }
+            },
+            // Topics with root content
+            chuDes: lopRecord.chuDes?.map(chuDe => ({
+                id: chuDe.id,
+                tenChuDe: chuDe.tenChuDe,
+                moTa: chuDe.moTa,
+                contentCount: chuDe.noiDungs?.length || 0,
+                noiDungs: chuDe.noiDungs?.map(noiDung => ({
+                    id: noiDung.id,
+                    tieuDe: noiDung.tieuDe,
+                    noiDung: noiDung.noiDung.length > 200 
+                        ? noiDung.noiDung.substring(0, 200) + '...' 
+                        : noiDung.noiDung, // Truncate long content for overview
+                    loaiNoiDung: noiDung.loaiNoiDung,
+                    hanNop: noiDung.hanNop,
+                    ngayNop: noiDung.ngayNop,
+                    trangThai: noiDung.trangThai,
+                    ngayTao: noiDung.ngayTao,
+
+                })) || []
+            })) || []
+        };
     }
 
     async getStudentCount(classId) {
@@ -386,7 +517,12 @@ class ClassRepository {
 
         } catch (error) {
             console.error('Database error in findClassesForUser:', error);
-            throw new Error('Lỗi khi truy vấn lớp học của người dùng');
+            // If it's a role validation error, re-throw as-is
+            if (error.message === 'Role không hợp lệ') {
+                throw error;
+            }
+            // Otherwise it's a database error
+            throw new DatabaseError('Lỗi khi truy vấn lớp học của người dùng từ cơ sở dữ liệu');
         }
     }
 }

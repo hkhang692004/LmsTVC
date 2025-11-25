@@ -1,5 +1,6 @@
 import { MonHoc, Nganh } from '../models/index.js';
 import { Op } from 'sequelize';
+import { DatabaseError } from '../utils/errors.js';
 
 class SubjectRepository {
     async findWithFilters(filters) {
@@ -52,7 +53,7 @@ class SubjectRepository {
 
         } catch (error) {
             console.error('Database error in findWithFilters:', error);
-            throw new Error('Lỗi khi truy vấn cơ sở dữ liệu');
+            throw new DatabaseError('Lỗi khi truy vấn môn học từ cơ sở dữ liệu');
         }
     }
 
@@ -70,7 +71,7 @@ class SubjectRepository {
             return monHoc ? this.mapToDTO(monHoc) : null;
         } catch (error) {
             console.error('Database error in findById:', error);
-            throw new Error('Lỗi khi tìm môn học');
+            throw new DatabaseError('Lỗi khi tìm môn học từ cơ sở dữ liệu');
         }
     }
 

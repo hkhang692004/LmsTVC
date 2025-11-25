@@ -1,5 +1,6 @@
-    import { NamHoc } from '../models/index.js';
+import { NamHoc } from '../models/index.js';
 import { Op } from 'sequelize';
+import { DatabaseError } from '../utils/errors.js';
 
 class YearRepository {
     async findWithFilters(filters) {
@@ -37,7 +38,7 @@ class YearRepository {
 
         } catch (error) {
             console.error('Database error in findWithFilters:', error);
-            throw new Error('Lỗi khi truy vấn cơ sở dữ liệu');
+            throw new DatabaseError('Lỗi khi truy vấn năm học từ cơ sở dữ liệu');
         }
     }
 
@@ -61,7 +62,7 @@ class YearRepository {
             return namHoc ? this.mapToDTO(namHoc) : null;
         } catch (error) {
             console.error('Database error in findCurrent:', error);
-            throw new Error('Lỗi khi tìm năm học hiện tại');
+            throw new DatabaseError('Lỗi khi tìm năm học hiện tại từ cơ sở dữ liệu');
         }
     }
 
@@ -74,7 +75,7 @@ class YearRepository {
             return namHoc ? this.mapToDTO(namHoc) : null;
         } catch (error) {
             console.error('Database error in findById:', error);
-            throw new Error('Lỗi khi tìm năm học');
+            throw new DatabaseError('Lỗi khi tìm năm học từ cơ sở dữ liệu');
         }
     }
 
