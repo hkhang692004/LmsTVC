@@ -56,6 +56,7 @@ const Directory = () => {
         <CourseSidebar
           sections={mockSections}
           isOpen={sidebarOpen}
+          courseName={courseName}
           onClose={() => setSidebarOpen(false)}
         />
 

@@ -9,6 +9,7 @@ import Directory from './pages/Directory'
 import ScrollOnChange from './components/myui/ScrollOnChange'
 import ForumContent from './pages/ForumContent'
 import Text from './pages/Text'
+import UploadAssignment from './pages/UploadAssignment'
 
 function App() {
 
@@ -49,9 +50,13 @@ function App() {
           path='/forumcontent'
           element={<ForumContent />}
         />
-                <Route
+        <Route
           path='/text'
-          element={<Text/>}
+          element={<Text />}
+        />
+        <Route
+          path='/assignment'
+          element={<UploadAssignment />}
         />
       </Routes>
     </BrowserRouter>

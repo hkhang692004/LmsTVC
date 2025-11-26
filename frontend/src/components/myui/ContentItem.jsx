@@ -42,7 +42,7 @@ const ContentItem = ({ item, courseName }) => {
                     state: {
                         folderName: item.ten,
                         courseName,
-                        
+
                     },
                 });
                 break;
@@ -85,7 +85,19 @@ const ContentItem = ({ item, courseName }) => {
                     },
                 });
                 break;
-                
+            case "nopbai":
+                navigate("/assignment", {
+                    state: {
+                        assignmentName: item.ten,
+                        courseName,
+                        text: item.text,
+                        hanNop: item.hanNop,
+                        ngayDang: item.ngayDang,
+                        trangThai:item.trangThai
+                    },
+                });
+                break;
+
 
             default:
                 console.log("Loại không hỗ trợ:", item.loai);
