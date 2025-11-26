@@ -228,3 +228,15 @@ h1 {
     @apply bg-background text-foreground;
   }
 }
+
+.ql-container {
+  height: 100% !important;
+  min-height: 300px !important; /* bằng với chiều cao textarea */
+  overflow-y: auto; /* cho phép cuộn nếu nội dung nhiều */
+}
+
+.ql-editor {
+  min-height: 300px; /* vùng nhập text chính, phải có min-height */
+  white-space: pre-wrap; /* để xuống dòng như textarea */
+  word-break: break-word; /* xuống dòng khi dài */
+}
