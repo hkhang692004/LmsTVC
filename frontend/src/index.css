@@ -189,7 +189,8 @@ h1 {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #3b82f6; /* màu xanh dương */
+  background-color: #3b82f6;
+  /* màu xanh dương */
   border-radius: 3px;
   border: 2px solid #f0f0f0;
 }
@@ -231,12 +232,73 @@ h1 {
 
 .ql-container {
   height: 100% !important;
-  min-height: 300px !important; /* bằng với chiều cao textarea */
-  overflow-y: auto; /* cho phép cuộn nếu nội dung nhiều */
+  min-height: 300px !important;
+  /* bằng với chiều cao textarea */
+  overflow-y: auto;
+  /* cho phép cuộn nếu nội dung nhiều */
 }
 
 .ql-editor {
-  min-height: 300px; /* vùng nhập text chính, phải có min-height */
-  white-space: pre-wrap; /* để xuống dòng như textarea */
-  word-break: break-word; /* xuống dòng khi dài */
+  min-height: 300px;
+  /* vùng nhập text chính, phải có min-height */
+  white-space: pre-wrap;
+  /* để xuống dòng như textarea */
+  word-break: break-word;
+  /* xuống dòng khi dài */
+}
+
+input[type="radio"] {
+  appearance: none;
+  width: 14px;
+  /* nhỏ hơn */
+  height: 14px;
+  /* nhỏ hơn */
+  border: 2px solid #6b7280;
+  border-radius: 50%;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+
+}
+
+input[type="radio"]:checked {
+  border-color: #2563eb;
+  background-color: white;
+}
+
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  /* chấm nhỏ hơn theo tỉ lệ */
+  height: 7px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+input[type="radio"]:hover {
+  border-color: #2563eb;
+}
+
+.button-flagged {
+  position: relative;
+  z-index: 0;
+}
+
+.button-flagged::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 12px solid red;
+  border-left: 12px solid transparent;
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 10;
+  filter: drop-shadow(1px 1px 1px white);
 }

@@ -25,34 +25,45 @@ const UploadAssignment = () => {
 
     // COUNTDOWN
     const [timeLeft, setTimeLeft] = useState("");
-
     useEffect(() => {
         if (!hanNop) return;
 
-        const interval = setInterval(() => {
+        const updateTimeLeft = () => {
             const deadline = new Date(hanNop).getTime();
             const now = Date.now();
             const diff = deadline - now;
 
             if (diff <= 0) {
                 setTimeLeft("Đã hết hạn");
-                clearInterval(interval);
-                return;
+                return false; // báo hiệu ngừng interval
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-
             const dayPart = days > 0 ? `${days} ngày ` : "";
             const hh = hours.toString().padStart(2, '0');
 
-
             setTimeLeft(`${dayPart}${hh} giờ `);
+
+            return true;
+        };
+
+        // Gọi ngay 1 lần khi effect chạy để cập nhật ngay lập tức
+        if (!updateTimeLeft()) {
+            // Nếu đã hết hạn ngay thì không tạo interval nữa
+            return;
+        }
+
+        const interval = setInterval(() => {
+            if (!updateTimeLeft()) {
+                clearInterval(interval);
+            }
         }, 1000);
 
         return () => clearInterval(interval);
     }, [hanNop]);
+
 
     const handleSelectFile = (e) => {
         const newFiles = Array.from(e.target.files);

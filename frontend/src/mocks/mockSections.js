@@ -131,7 +131,7 @@ Email giảng viên:  dat.nt@ou.edu.vn
         loai: "kiemtra",
         text: "Bài kiểm tra này để lấy điểm cộng cho giữa kỳ.",
         thoiGianMo: "2025-11-27T08:00:00",       // thời gian bắt đầu mở
-        thoiGianDong: "2025-11-27T10:50:00",     // thời gian kết thúc
+        thoiGianDong: "2025-11-27T17:00:00",     // thời gian kết thúc
         trangThai: "chua-mo",                     // trạng thái: chua-mo, dang-mo, da-dong
         tongDiem: "",
         url: "",

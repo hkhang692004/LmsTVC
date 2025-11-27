@@ -14,8 +14,13 @@ const DoTest = () => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState({});
     const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
+    const [showModal, setShowModal] = useState(false);
+    const [showResultModal, setShowResultModal] = useState(false);
+    const [totalScore, setTotalScore] = useState(0);
 
     const question = cauHoi[currentQuestion];
+
+    const unansweredCount = cauHoi.filter((q) => !answers[q.id]).length;
 
     const handleSelectAnswer = (questionId, answerId) => {
         setAnswers({
@@ -57,32 +62,24 @@ const DoTest = () => {
     };
 
     const handleSubmit = () => {
-        const unanswered = cauHoi.filter((q) => !answers[q.id]);
+        setShowModal(true);
+    };
 
-        if (unanswered.length > 0) {
-            const confirm = window.confirm(
-                `Bạn còn ${unanswered.length} câu chưa trả lời. Bạn có chắc muốn nộp bài?`
-            );
-            if (!confirm) return;
-        }
+    // ✔ Modal xác nhận → tính điểm → mở modal kết quả
+    const confirmSubmit = () => {
+        let total = 0;
 
-        let totalScore = 0;
         cauHoi.forEach((question) => {
             const selectedAnswer = answers[question.id];
-            const correctAnswer = question.luaChon.find((option) => option.laDapAnDung);
+            const correctAnswer = question.luaChon.find((o) => o.laDapAnDung);
             if (selectedAnswer === correctAnswer?.id) {
-                totalScore += question.diemDatDuoc;
+                total += question.diemDatDuoc;
             }
         });
 
-        alert(`Bạn đã đạt ${totalScore} điểm!`);
-        navigate("-1", {
-            state: {
-                tongDiem: totalScore,
-                trangThai: 'da-nop',
-                
-            },
-        });
+        setTotalScore(total);
+        setShowModal(false);
+        setShowResultModal(true);
     };
 
     if (!question) {
@@ -99,6 +96,7 @@ const DoTest = () => {
 
             <div className="pt-20 pb-10 px-4 lg:px-10 min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto">
+
                     {/* HEADER */}
                     <div className="bg-blue-500 text-white p-6 rounded-t-lg flex items-center space-x-4">
                         <div className="bg-white p-3 rounded">
@@ -118,10 +116,11 @@ const DoTest = () => {
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-6">
-                        {/* BẢNG CÂU HỎI - BÊN TRÁI */}
+
+                        {/* LEFT SIDEBAR */}
                         <div className="lg:w-1/4">
                             <div className="bg-white rounded-lg shadow-lg p-4 sticky top-20">
-                                {/* INFO BOX */}
+
                                 <div className="border rounded-lg p-3 mb-4 text-sm">
                                     <div className="font-semibold mb-2">Câu hỏi {currentQuestion + 1}</div>
                                     <div className="text-gray-600 mb-1">
@@ -129,41 +128,39 @@ const DoTest = () => {
                                     </div>
                                     <div className="text-gray-600">Đạt điểm {question.diemDatDuoc}</div>
                                     <button
-                                        type="button"
                                         onClick={handleToggleFlag}
                                         className={`mt-2 text-sm flex items-center gap-1 ${flaggedQuestions.has(question.id)
                                             ? 'text-red-700'
                                             : 'text-blue-600 hover:underline'
                                             }`}
                                     >
-                                        <span className="mr-1">{flaggedQuestions.has(question.id) ? '🚩' : '🏴'}</span>
+                                        <span className="mr-1">
+                                            {flaggedQuestions.has(question.id) ? '🚩' : '🏴'}
+                                        </span>
                                         {flaggedQuestions.has(question.id) ? 'Bỏ cờ' : 'Đặt cờ'}
                                     </button>
                                 </div>
 
                                 <hr className="my-4" />
 
-                                {/* GRID CÂU HỎI */}
                                 <div className="grid grid-cols-5 gap-2">
                                     {cauHoi.map((q, idx) => (
                                         <button
                                             key={q.id}
                                             onClick={() => handleGoToQuestion(idx)}
-                                            className={`w-10 h-10 rounded border-2 font-semibold transition text-sm ${idx === currentQuestion
-                                                ? 'bg-gray-800 text-white border-gray-800'
-                                                : flaggedQuestions.has(q.id)
-                                                    ? 'bg-red-700 text-white border-red-700'
-                                                    : answers[q.id]
-                                                        ? 'bg-blue-500 text-white border-blue-500'
-                                                        : 'bg-white border-gray-300 hover:bg-gray-100'
-                                                }`}
+                                            className={`relative w-10 h-10 rounded font-semibold transition text-sm
+    ${idx === currentQuestion ? 'border-2 border-gray-800' : 'border-2 border-gray-200'}
+    ${answers[q.id] ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-gray-300 hover:bg-gray-100'}
+    ${flaggedQuestions.has(q.id) ? 'button-flagged' : ''}
+  `}
                                         >
                                             {idx + 1}
                                         </button>
+
+
                                     ))}
                                 </div>
 
-                                {/* LINK LÀM XONG */}
                                 <div className="mt-4 text-center">
                                     <button onClick={handleSubmit} className="text-blue-600 hover:underline text-sm">
                                         Làm xong ...
@@ -172,18 +169,15 @@ const DoTest = () => {
                             </div>
                         </div>
 
-                        {/* NỘI DUNG CÂU HỎI - BÊN PHẢI */}
+
+                        {/* QUESTION CONTENT */}
                         <div className="lg:w-3/4 bg-white rounded-lg shadow-lg mt-15">
-                            {/* NÚT QUAY LẠI */}
 
-
-                            {/* NỘI DUNG CÂU HỎI */}
                             <div className="p-6">
                                 <div className="bg-blue-50 p-6 rounded-lg mb-6">
                                     <p className="text-gray-800 leading-relaxed">{question.noiDung}</p>
                                 </div>
 
-                                {/* CÁC LỰA CHỌN */}
                                 <div className="space-y-3 mb-6">
                                     {question.luaChon
                                         .sort((a, b) => a.thuTu - b.thuTu)
@@ -194,7 +188,7 @@ const DoTest = () => {
                                                     name={`question-${question.id}`}
                                                     checked={answers[question.id] === option.id}
                                                     onChange={() => handleSelectAnswer(question.id, option.id)}
-                                                    className="mt-1 mr-3 w-4 h-4"
+                                                    className="mr-2 mt-1.5"
                                                 />
                                                 <span className="mr-2 font-semibold">{String.fromCharCode(97 + idx)}.</span>
                                                 <span className="group-hover:text-blue-600">{option.noiDung}</span>
@@ -202,16 +196,17 @@ const DoTest = () => {
                                         ))}
                                 </div>
 
-                                {/* LINK XÓA LỰA CHỌN */}
                                 {answers[question.id] && (
                                     <div className="mb-6">
-                                        <button onClick={handleClearChoice} className="text-blue-600 hover:underline text-sm">
+                                        <button
+                                            onClick={handleClearChoice}
+                                            className="text-blue-600 hover:underline text-sm"
+                                        >
                                             Bỏ lựa chọn
                                         </button>
                                     </div>
                                 )}
 
-                                {/* NÚT ĐIỀU HƯỚNG */}
                                 <div className="flex justify-end gap-3 pt-4 border-t">
                                     <button
                                         onClick={handlePrevious}
@@ -242,6 +237,82 @@ const DoTest = () => {
                     </div>
                 </div>
             </div>
+
+
+            {/* 🔵 MODAL XÁC NHẬN NỘP BÀI */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn">
+
+                        <h3 className="text-lg font-semibold mb-3">Nộp bài và kết thúc?</h3>
+
+                        <p className="text-gray-700 mb-4">
+                            Sau khi nộp bài, bạn sẽ không thể thay đổi đáp án nữa.
+                        </p>
+
+                        {unansweredCount > 0 && (
+                            <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-4">
+                                <p className="text-orange-800 text-sm">
+                                    Số câu chưa trả lời: {unansweredCount}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={confirmSubmit}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold"
+                            >
+                                Nộp bài
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/*  MODAL KẾT QUẢ */}
+            {showResultModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+
+                        <h3 className="text-xl font-bold text-center text-blue-500 mb-3">
+                            Nộp bài thành công!
+                        </h3>
+
+                        <p className="text-center text-gray-700 mb-2">
+                            Điểm số của bạn:
+                        </p>
+
+                        <div className="text-center text-3xl  text-gray-700 mb-6">
+                            {totalScore}/10
+                        </div>
+
+                        <div className="flex justify-center">
+                            <button
+                                onClick={() =>
+                                    navigate(-1, {
+                                        state: {
+                                            tongDiem: totalScore,
+                                            trangThai: 'da-nop',
+                                        },
+                                    })
+                                }
+                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+                            >
+                                Trở về trang kiểm tra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <ScrollToTop />
             <MyFooter />
         </>

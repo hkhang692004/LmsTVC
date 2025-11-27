@@ -21,7 +21,7 @@ const TestExercise = () => {
     const ngaybatdau = location.state?.ngaybatdau;
     const trangThai = location.state?.trangThai;
     const tongDiem = location.state?.tongDiem;
-    
+
     const cauHoi = location.state?.cauHoi;
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,33 +32,41 @@ const TestExercise = () => {
     useEffect(() => {
         if (!ngayketthuc) return;
 
-        const interval = setInterval(() => {
+        const updateTimeLeft = () => {
             const deadline = new Date(ngayketthuc).getTime();
             const now = Date.now();
             const diff = deadline - now;
 
             if (diff <= 0) {
                 setTimeLeft("Đã hết hạn");
-                clearInterval(interval);
-                return;
+                return false; // báo hiệu dừng interval
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            
 
             const dayPart = days > 0 ? `${days} ngày ` : "";
-
             const hh = hours.toString().padStart(2, "0");
             const mm = minutes.toString().padStart(2, "0");
-            
 
             setTimeLeft(`Còn lại ${dayPart}${hh} giờ ${mm} phút`);
+            return true;
+        };
+
+        if (!updateTimeLeft()) {
+            return; // Nếu hết hạn luôn thì không set interval
+        }
+
+        const interval = setInterval(() => {
+            if (!updateTimeLeft()) {
+                clearInterval(interval);
+            }
         }, 1000);
 
         return () => clearInterval(interval);
     }, [ngayketthuc]);
+
 
 
 
@@ -116,8 +124,8 @@ const TestExercise = () => {
                                     className="px-6 py-3 bg-orange-500 hover:bg-blue-500 text-white rounded-lg shadow font-semibold w-fit"
                                     onClick={() => navigate("/kiemtra", {
                                         state: {
-                                           
-                                           testName,
+
+                                            testName,
                                             cauHoi
                                         }
                                     })}
