@@ -10,6 +10,8 @@ import ScrollOnChange from './components/myui/ScrollOnChange'
 import ForumContent from './pages/ForumContent'
 import Text from './pages/Text'
 import UploadAssignment from './pages/UploadAssignment'
+import TestExercise from './pages/TestExercise'
+import DoTest from './pages/DoTest'
 
 function App() {
 
@@ -57,6 +59,14 @@ function App() {
         <Route
           path='/assignment'
           element={<UploadAssignment />}
+        />
+        <Route
+          path='/test'
+          element={<TestExercise />}
+        />
+        <Route
+          path='/kiemtra'
+          element={<DoTest />}
         />
       </Routes>
     </BrowserRouter>

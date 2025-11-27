@@ -93,7 +93,21 @@ const ContentItem = ({ item, courseName }) => {
                         text: item.text,
                         hanNop: item.hanNop,
                         ngayDang: item.ngayDang,
-                        trangThai:item.trangThai
+                        trangThai: item.trangThai
+                    },
+                });
+                break;
+            case "kiemtra":
+                navigate("/test", {
+                    state: {
+                        testName: item.ten,
+                        courseName,
+                        text: item.text,
+                        ngaybatdau: item.thoiGianMo,
+                        ngayketthuc: item.thoiGianDong,
+                        trangThai: item.trangThai,
+                        tongDiem:item.tongDiem,
+                        cauHoi:item.cauHoi
                     },
                 });
                 break;

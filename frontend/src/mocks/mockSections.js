@@ -121,18 +121,45 @@ Email giảng viên:  dat.nt@ou.edu.vn
       }
     ]
   },
-  {
+    {
     id: 4,
     title: "Bài kiểm tra",
     items: [
       {
         id: 109,
-        ten: "Kiểm tra",
+        ten: "Kiểm tra giữa kỳ",
         loai: "kiemtra",
-        thoiGianMo: "2025-12-20T08:00:00",
-        thoiGianDong: "2025-12-20T09:30:00",
-        trangThai: "chua-lam", // hoặc: "da-lam"
-        url: ""
+        text: "Bài kiểm tra này để lấy điểm cộng cho giữa kỳ.",
+        thoiGianMo: "2025-11-27T08:00:00",       // thời gian bắt đầu mở
+        thoiGianDong: "2025-11-27T10:50:00",     // thời gian kết thúc
+        trangThai: "chua-mo",                     // trạng thái: chua-mo, dang-mo, da-dong
+        tongDiem: "",
+        url: "",
+        thoiluong:"",
+        cauHoi: [  // mock luôn câu hỏi kèm đáp án (nếu muốn)
+          {
+            id: 1001,
+            noiDung: "Câu hỏi 1: React là gì?",
+            diemDatDuoc: 5,
+            loaiCauHoi: "motDapAn",
+            thuTu: 1,
+            luaChon: [
+              { id: 1, noiDung: "Thư viện JS", laDapAnDung: true, thuTu: 1 },
+              { id: 2, noiDung: "Ngôn ngữ lập trình", laDapAnDung: false, thuTu: 2 }
+            ]
+          },
+          {
+            id: 1002,
+            noiDung: "Câu hỏi 2: CSS dùng để làm gì?",
+            diemDatDuoc: 5,
+            loaiCauHoi: "motDapAn",
+            thuTu: 2,
+            luaChon: [
+              { id: 3, noiDung: "Định dạng giao diện", laDapAnDung: true, thuTu: 1 },
+              { id: 4, noiDung: "Xử lý backend", laDapAnDung: false, thuTu: 2 }
+            ]
+          }
+        ]
       }
     ]
   },
