@@ -1,17 +1,19 @@
-import { BrowserRouter, Route, Routes } from 'react-router'
-import StartPage from './pages/StartPage'
-import SignInPage from './pages/SignInPage'
-import MyCoursePage from './pages/MyCoursePage'
-import MyContent from './pages/MyContent'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './pages/main/ProtectedRoute'
+
+import SignInPage from './pages/main/SignInPage'
+import MyCoursePage from './pages/student/MyCoursePage'
+import MyContent from './pages/student/MyContent'
 import { Toaster } from 'sonner'
-import Forum from './pages/Forum'
-import Directory from './pages/Directory'
+import Forum from './pages/student/Forum'
+import Directory from './pages/student/Directory'
 import ScrollOnChange from './components/myui/ScrollOnChange'
-import ForumContent from './pages/ForumContent'
-import Text from './pages/Text'
-import UploadAssignment from './pages/UploadAssignment'
-import TestExercise from './pages/TestExercise'
-import DoTest from './pages/DoTest'
+import ForumContent from './pages/student/ForumContent'
+import Text from './pages/student/Text'
+import UploadAssignment from './pages/student/UploadAssignment'
+import TestExercise from './pages/student/TestExercise'
+import DoTest from './pages/student/DoTest'
+import StartPage from './pages/main/StartPage'
 
 function App() {
 
@@ -30,44 +32,18 @@ function App() {
           path='/signin'
           element={<SignInPage />}
         />
-
-        {/* protected route */}
-        <Route
-          path='/mycourse'
-          element={<MyCoursePage />}
-        />
-        <Route
-          path='/mycontent'
-          element={<MyContent />}
-        />
-        <Route
-          path='/forum'
-          element={<Forum />}
-        />
-        <Route
-          path='/directory'
-          element={<Directory />}
-        />
-        <Route
-          path='/forumcontent'
-          element={<ForumContent />}
-        />
-        <Route
-          path='/text'
-          element={<Text />}
-        />
-        <Route
-          path='/assignment'
-          element={<UploadAssignment />}
-        />
-        <Route
-          path='/test'
-          element={<TestExercise />}
-        />
-        <Route
-          path='/kiemtra'
-          element={<DoTest />}
-        />
+        {/* protected routes (wrapped by ProtectedRoute) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path='/mycourse' element={<MyCoursePage />} />
+          <Route path='/mycontent' element={<MyContent />} />
+          <Route path='/forum' element={<Forum />} />
+          <Route path='/directory' element={<Directory />} />
+          <Route path='/forumcontent' element={<ForumContent />} />
+          <Route path='/text' element={<Text />} />
+          <Route path='/assignment' element={<UploadAssignment />} />
+          <Route path='/test' element={<TestExercise />} />
+          <Route path='/kiemtra' element={<DoTest />} />
+        </Route>
       </Routes>
     </BrowserRouter>
 

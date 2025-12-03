@@ -9,12 +9,12 @@ import { z } from 'zod'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import userService from "@/services/userService"
+import { use } from "react"
+import useUserStore from "@/stores/useUserStore"
 
-const SigninSchema = z.object({
-  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 kí tự "),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 kí tự")
-
-})
 
 
 
@@ -22,6 +22,10 @@ export function LoginForm({
   className,
   ...props
 }) {
+  const SigninSchema = z.object({
+    email: z.email("Email không hợp lệ"),
+    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 kí tự")
+  })
 
   const {
     register,
@@ -30,9 +34,23 @@ export function LoginForm({
   } = useForm({
     resolver: zodResolver(SigninSchema),
   });
+  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
-    console.log("Form data:", data);
+    try {
+      const response = await userService.loginUser({
+        email: data.email,
+        password: data.password,
+      });
+      const userData = response.data?.user;
+      useUserStore.getState().setUser(userData);
+
+      toast.success("Đăng nhập thành công!");
+      navigate("/mycourse");
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || "Đăng nhập thất bại!";
+      toast.error(errorMsg);
+    }
   }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -49,14 +67,14 @@ export function LoginForm({
                 <h2 className="text-2xl font-bold"> Đăng nhập LMS TVC</h2>
                 <p className="text-muted-foreground text-balance">Chào mừng bạn, hãy đăng nhập để bắt đầu</p>
               </div>
-              {/* Username */}
+              {/* Email */}
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="block text-sm">Tài khoản</Label>
-                  <Input type="text" id="username" placeholder="Tài khoản" {...register("username")} />
+                  <Label htmlFor="email" className="block text-sm">Email</Label>
+                  <Input type="text" id="email" placeholder="Email" {...register("email")} />
 
-                  {errors.username && (
-                    <p className="text-destructive text-sm">{errors.username.message}</p>
+                  {errors.email && (
+                    <p className="text-destructive text-sm">{errors.email.message}</p>
                   )}
                 </div>
               </div>
