@@ -22,7 +22,7 @@ const HocKy = sequelize.define('HocKy', {
         type: Sequelize.DATE,
         allowNull: false
     },
-    trangThai: {
+    status: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: true

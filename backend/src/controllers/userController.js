@@ -7,13 +7,15 @@ import { ValidationError } from "../utils/errors.js";
 class UserController {
     createUser = asyncHandler(async (req, res) => {
         const { ten, email, password, role = 'sinhVien' } = req.body;
+        const avatarFile = req.file; // File từ multer middleware
 
-        const user = await UserService.createUser({ ten, email, password, role });
+        const user = await UserService.createUser({ ten, email, password, role }, avatarFile);
         
         ResponseUtil.created(res, {
             id: user.id,
             ten: user.ten,
             email: user.email,
+            avatar: user.avatar,
             role: user.role,
             status: user.status
         }, 'Tạo người dùng thành công');
@@ -59,8 +61,9 @@ class UserController {
     updateUser = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
+        const avatarFile = req.file; // File từ multer middleware
         
-        const user = await UserService.updateUser(id, updateData);
+        const user = await UserService.updateUser(id, updateData, avatarFile);
         
         ResponseUtil.success(res, {
             id: user.id,
@@ -88,6 +91,7 @@ class UserController {
             id: user.id,
             ten: user.ten,
             email: user.email,
+            avatar: user.avatar,
             role: user.role
         }, 'Lấy thông tin người dùng thành công');
     });
@@ -120,6 +124,7 @@ class UserController {
             id: user.id,
             ten: user.ten,
             email: user.email,
+            avatar: user.avatar,
             role: user.role
         };
 
@@ -128,6 +133,7 @@ class UserController {
                 id: user.id,
                 ten: user.ten,
                 email: user.email,
+                avatar: user.avatar,
                 role: user.role
             }
         }, 'Đăng nhập thành công');
@@ -157,6 +163,40 @@ class UserController {
         await UserService.changePassword(user.id, currentPassword, newPassword);
         
         ResponseUtil.success(res, null, 'Đổi mật khẩu thành công');
+    });
+
+    updateProfile = asyncHandler(async (req, res) => {
+        const user = req.user; // From auth middleware
+        const updateData = req.body;
+        const avatarFile = req.file; // File từ multer middleware
+        
+        // Chỉ cho phép user update một số fields
+        const allowedFields = ['ten', 'email'];
+        const filteredData = {};
+        allowedFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                filteredData[field] = updateData[field];
+            }
+        });
+        
+        const updatedUser = await UserService.updateUser(user.id, filteredData, avatarFile);
+        
+        // Cập nhật session với thông tin mới
+        req.session.user = {
+            id: updatedUser.id,
+            ten: updatedUser.ten,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar,
+            role: updatedUser.role
+        };
+        
+        ResponseUtil.success(res, {
+            id: updatedUser.id,
+            ten: updatedUser.ten,
+            email: updatedUser.email,
+            avatar: updatedUser.avatar,
+            role: updatedUser.role
+        }, 'Cập nhật profile thành công');
     });
 }
 

@@ -2,8 +2,9 @@ import { sequelize, Sequelize } from "../config/db.js";
 
 const Lop_SinhVien = sequelize.define('Lop_SinhVien', {
     id: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         allowNull: false,
+        autoIncrement: true,
         primaryKey: true
     },
     idLop: {

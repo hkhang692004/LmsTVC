@@ -26,6 +26,10 @@ const NoiDungChiTiet = sequelize.define('NoiDungChiTiet', {
         type: Sequelize.STRING,
         allowNull: true
     },
+    fileSize: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
     ngayTao: {
         type: Sequelize.DATE,
         allowNull: false,

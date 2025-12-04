@@ -1,4 +1,3 @@
-// Utility để chuẩn hóa response format
 
 class ResponseUtil {
     static success(res, data, message = 'Thành công', statusCode = 200, meta = null) {
@@ -45,7 +44,6 @@ class ResponseUtil {
         });
     }
 
-    // Không cần error methods vì sẽ dùng Error Classes + Global Handler
 }
 
 export default ResponseUtil;

@@ -5,14 +5,17 @@ import QuestionController from "../controllers/questionController.js";
 const router = express.Router();
 
 // === EXAM MANAGEMENT ===
-// GET /api/exams?lop=123
+// GET /api/exams?lop=123 - Role-based: Teacher (all exams) vs Student (available exams)
 router.get("/", ExamController.getAllExams);
+// GET /api/exams/:id - Basic exam info
 router.get("/:id", ExamController.getExamById);
+// GET /api/exams/:id/student-view - Exam + my submission + status (for students)
+router.get("/:id/student-view", ExamController.getExamStudentView);
 router.post("/", ExamController.createExam);
 router.put("/:id", ExamController.updateExam);
 router.delete("/:id", ExamController.deleteExam);
 
-// GET /api/exams/:id/questions
+// GET /api/exams/:id/questions - Questions for exam (Teacher: with answers, Student: without answers)
 router.get("/:id/questions", ExamController.getExamQuestions);
 
 // POST /api/exams/:id/open - Mở bài thi
@@ -24,19 +27,15 @@ router.post("/:id/close", ExamController.closeExam);
 // GET /api/exams/:id/stats - Thống kê bài thi
 router.get("/:id/stats", ExamController.getExamStats);
 
-// GET /api/exams/:id/submissions - Danh sách bài làm của exam (for teacher)
+// GET /api/exams/:id/submissions - All submissions for exam (teacher only)
 // Query: ?status=completed&studentId=123&page=1&limit=20
 router.get("/:id/submissions", ExamController.getExamSubmissions);
 
 // === QUESTIONS ===
-// POST /api/exams/:id/questions - Tạo câu hỏi mới (với luaChon nested)
+// POST /api/exams/:id/questions - Tạo câu hỏi mới (hỗ trợ single hoặc multiple)
+// Body: { questions: [{noiDung, diemToiDa, loaiCauHoi, luaChons: [...]}] }
+// Hoặc: {noiDung, diemToiDa, loaiCauHoi, luaChons: [...]} cho single question
 router.post("/:id/questions", QuestionController.createQuestion);
-
-// POST /api/exams/:id/questions/bulk - Tạo nhiều câu hỏi cùng lúc
-router.post("/:id/questions/bulk", QuestionController.createMultipleQuestions);
-
-// POST /api/exams/:id/questions/complete - Tạo questions + choices trong 1 request
-router.post("/:id/questions/complete", QuestionController.createCompleteQuestions);
 
 // PUT /api/exams/questions/:id - Update câu hỏi (trả về object đã update)
 router.put("/questions/:id", QuestionController.updateQuestion);

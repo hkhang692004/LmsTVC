@@ -1,6 +1,7 @@
 import express from "express";
 import nguoiDungRoutes from "./userRouters.js";
 import classRoutes from "./classRouters.js";
+import topicRoutes from "./topicRouters.js";
 import contentRoutes from "./contentRouters.js";
 import examRoutes from "./examRouters.js";
 import submissionRoutes from "./submissionRouters.js";
@@ -25,7 +26,8 @@ router.use("/subjects", subjectRoutes);              // MonHoc
 router.use("/classes", classRoutes);                   // Lop
 
 // Learning content - Topics & Contents
-router.use("/content", contentRoutes);               // Topics + Contents (NoiDung + NoiDungChiTiet)
+router.use("/topics", topicRoutes);                 // ChuDe management
+router.use("/content", contentRoutes);               // NoiDung management (NoiDung + NoiDungChiTiet)
 
 // Assessment - Exams & Submissions
 router.use("/exams", examRoutes);                    // BaiKiemTra + CauHoi + LuaChon

@@ -27,6 +27,7 @@ export const checkLogin = (req, res, next) => {
             id: sessionUser.id,
             email: sessionUser.email,
             ten: sessionUser.ten,
+            avatar: sessionUser.avatar,
             role: sessionUser.role
         };
 

@@ -43,6 +43,11 @@ function getSessionStore() {
     const dbType = process.env.SESSION_STORE || 'memory';
     
     switch (dbType) {
+        case 'memory':
+            // Memory store (development only)
+            console.log('🚀 Using memory store for sessions');
+            return undefined; // Express session default memory store
+
         case 'mongodb':
             return MongoStore.create({
                 mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/lms-sessions'
@@ -66,8 +71,8 @@ function getSessionStore() {
             return undefined; // Fallback to memory
             
         default:
-            // Memory store (chỉ dùng cho development)
-            console.warn('⚠️  Using memory store for sessions - not recommended for production');
+            // Default memory store 
+            console.warn('⚠️  Using default memory store for sessions - not recommended for production');
             return undefined;
     }
 }
