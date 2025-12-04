@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import mockCourses from '@/mocks/mockCourse'
+import classService from '@/services/classService'
 // Styles và pattern như bạn đã có
 const courseStyles = [
     { color: 'bg-blue-500', pattern: 'hexagon', patternOpacity: 0.15 },
@@ -62,7 +62,6 @@ const CourseCard = ({ title, lecturer, index }) => {
             default: return <CirclesPattern id={patternId} opacity={style.patternOpacity} />
         }
     }
-
     return (
         <a className='block' onClick={handleClick}>
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 h-60 mx-2">
@@ -85,9 +84,31 @@ const CourseCard = ({ title, lecturer, index }) => {
 
 // Component danh sách nhiều khóa học
 const CourseList = () => {
+    const [classes,setClasses] = useState([]);
+    const [loading,setLoading] = useState(false);
+
+    useEffect (() => {
+        const fetchClasses = async () => {
+            setLoading (true);
+            try{
+                const response = await classService.getMyClass();
+                setClasses (response.classses || []);
+
+
+            }catch (error){
+                console.error("Lỗi khi fetch lớp học:", error);
+            }finally{
+                setLoading (false);
+            }
+    };
+        fetchClasses();
+    }, [])
+
+
+
     return (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 space-y-6">
-            {mockCourses.map((course, index) => (
+            {classes.map((course, index) => (
                 <CourseCard
                     key={index}
                     title={course.title}
