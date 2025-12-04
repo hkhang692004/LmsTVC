@@ -34,7 +34,7 @@ const BaiKiemTra = sequelize.define('BaiKiemTra', {
         type: Sequelize.STRING,
         allowNull: false
     },
-    trangThai: {
+    status: {
         type: Sequelize.ENUM('chuaMo', 'dangMo', 'daDong'),
         allowNull: false,
         defaultValue: 'chuaMo'

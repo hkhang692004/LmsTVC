@@ -1,6 +1,7 @@
 import express from "express";
 import UserRepository from "../repositories/userRepository.js";
 import ClassRepository from "../repositories/classRepository.js";
+import { uploadFiles, deleteFiles } from '../utils/cloudinaryUtils.js';
 import bcrypt from "bcrypt";
 import { ValidationError, UnauthorizedError, NotFoundError, ConflictError } from "../utils/errors.js";
 
@@ -23,7 +24,7 @@ class UserService {
         return user;
     }
 
-    async createUser(userData) {
+    async createUser(userData, avatarFile = null) {
         const { ten, email, password, role = 'sinhVien' } = userData;
         
         // Validation
@@ -55,11 +56,23 @@ class UserService {
         // Hash password
         const hashedPassword = await this.hashPassword(password);
 
+        // Upload avatar if provided
+        let avatarUrl = null;
+        if (avatarFile) {
+            try {
+                const uploadResults = await uploadFiles([avatarFile]);
+                avatarUrl = uploadResults[0].url;
+            } catch (error) {
+                throw new ValidationError(`Avatar upload failed: ${error.message}`);
+            }
+        }
+
         const newUser = {
             id,
             ten,
             email,
             password: hashedPassword,
+            avatar: avatarUrl,
             role,
             status: true
         };
@@ -85,7 +98,7 @@ class UserService {
         return user;
     }
 
-    async updateUser(id, updateData) {
+    async updateUser(id, updateData, avatarFile = null) {
         if (!id) {
             throw new ValidationError('ID người dùng là bắt buộc');
         }
@@ -110,6 +123,30 @@ class UserService {
 
         if (updateData.role && !['admin', 'giangVien', 'sinhVien'].includes(updateData.role)) {
             throw new ValidationError('Role không hợp lệ');
+        }
+
+        // Handle avatar upload
+        let oldAvatarUrl = null;
+        if (avatarFile) {
+            try {
+                // Keep track of old avatar for cleanup
+                oldAvatarUrl = existingUser.avatar;
+                
+                // Upload new avatar
+                const uploadResults = await uploadFiles([avatarFile]);
+                updateData.avatar = uploadResults[0].url;
+                
+                // Delete old avatar from Cloudinary if exists
+                if (oldAvatarUrl) {
+                    try {
+                        await deleteFiles([oldAvatarUrl]);
+                    } catch (deleteError) {
+                        console.warn('Failed to delete old avatar:', deleteError.message);
+                    }
+                }
+            } catch (error) {
+                throw new ValidationError(`Avatar upload failed: ${error.message}`);
+            }
         }
 
         // Hash password if provided

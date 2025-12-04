@@ -38,7 +38,7 @@ const NoiDung = sequelize.define('NoiDung', {
         type: Sequelize.DATE,
         allowNull: true
     },
-    trangThai: {
+    status: {
         type: Sequelize.ENUM('an', 'daNop', 'treHan'),
         allowNull: false,
         defaultValue: 'an'

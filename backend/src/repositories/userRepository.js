@@ -29,6 +29,38 @@ class UserRepository {
         }
     }
 
+    // Batch find users by multiple IDs (fix N+1 query)
+    async findByIds(ids, filters = {}) {
+        try {
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return [];
+            }
+
+            const whereClause = {
+                id: { [Op.in]: ids }
+            };
+
+            // Apply filters if provided
+            if (filters.role) {
+                whereClause.role = filters.role;
+            }
+
+            if (filters.status !== undefined) {
+                whereClause.status = filters.status;
+            }
+
+            const users = await NguoiDung.findAll({
+                where: whereClause,
+                attributes: ['id', 'email', 'ten', 'role', 'status', 'avatar', 'createAt']
+            });
+
+            return users;
+        } catch (error) {
+            console.error('Database error in findByIds:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách người dùng từ cơ sở dữ liệu');
+        }
+    }
+
     async findByIdWithPassword(id) {
         try {
             const user = await NguoiDung.findByPk(id, {

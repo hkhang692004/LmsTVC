@@ -5,7 +5,7 @@ import { DatabaseError } from '../utils/errors.js';
 class ClassRepository {
     async findWithFilters(filters) {
         const { hocKyId, giangVienId, search, page = 1, limit = 20 } = filters;
-        
+
         // Build WHERE conditions
         const whereConditions = {};
         if (hocKyId) whereConditions.idHocKy = hocKyId;
@@ -34,7 +34,7 @@ class ClassRepository {
                     ...searchCondition
                 },
                 attributes: [
-                    'id', 
+                    'id',
                     'tenLop',
                     // Subqueries for counts to avoid N+1 problems
                     [
@@ -140,7 +140,15 @@ class ClassRepository {
     }
 
     // Additional helper methods
+    async existsById(classId) {
+        const lop = await Lop.findByPk(classId);
+        return !!lop;
+    }
     async findById(classId) {
+        if (!classId) {
+            return null;
+        }
+
         try {
             const lop = await Lop.findByPk(classId, {
                 include: [
@@ -148,26 +156,29 @@ class ClassRepository {
                         model: HocKy,
                         as: 'hocKy',
                         attributes: ['id', 'ten', 'ngayBatDau', 'ngayKetThuc'],
-                        include: [{ 
-                            model: NamHoc, 
+                        include: [{
+                            model: NamHoc,
                             as: 'namHoc',
                             attributes: ['id', 'nam']
-                        }]
+                        }],
+                        required: false // LEFT JOIN to handle missing data
                     },
-                    { 
-                        model: NguoiDung, 
+                    {
+                        model: NguoiDung,
                         as: 'giangVien',
-                        attributes: ['id', 'ten', 'email']
+                        attributes: ['id', 'ten', 'email'],
+                        required: false // LEFT JOIN to handle missing data
                     },
                     {
                         model: MonHoc,
                         as: 'monHoc',
                         attributes: ['id', 'tenMon'],
-                        include: [{ 
-                            model: Nganh, 
+                        include: [{
+                            model: Nganh,
                             as: 'nganh',
                             attributes: ['id', 'tenNganh']
-                        }]
+                        }],
+                        required: false // LEFT JOIN to handle missing data
                     },
                     // Thêm các chủ đề của lớp
                     {
@@ -180,17 +191,25 @@ class ClassRepository {
                                 model: NoiDung,
                                 as: 'noiDungs',
                                 attributes: [
-                                    'id', 'tieuDe', 'noiDung', 'loaiNoiDung', 
-                                    'hanNop', 'ngayNop', 'trangThai', 'ngayTao'
+                                    'id', 'tieuDe', 'noiDung', 'loaiNoiDung',
+                                    'hanNop', 'ngayNop', 'status', 'ngayTao'
                                 ],
                                 where: {
                                     idNoiDungCha: null // Chỉ lấy nội dung gốc (không có parent)
                                 },
+                                include: [
+                                    {
+                                        model: NoiDungChiTiet,
+                                        as: 'chiTiets',
+                                        attributes: ['id', 'loaiChiTiet', 'filePath', 'fileName', 'fileType', 'ngayTao'],
+                                        required: false // LEFT JOIN để vẫn hiển thị nội dung dù không có file
+                                    }
+                                ],
                                 required: false, // LEFT JOIN để vẫn hiển thị chủ đề dù không có nội dung
-
                                 order: [['ngayTao', 'DESC']] // Nội dung mới nhất trước
                             }
                         ],
+                        required: false, // LEFT JOIN to handle missing topics
                         order: [['tenChuDe', 'ASC']] // Sắp xếp chủ đề theo tên
                     }
                 ],
@@ -281,15 +300,21 @@ class ClassRepository {
                 noiDungs: chuDe.noiDungs?.map(noiDung => ({
                     id: noiDung.id,
                     tieuDe: noiDung.tieuDe,
-                    noiDung: noiDung.noiDung.length > 200 
-                        ? noiDung.noiDung.substring(0, 200) + '...' 
-                        : noiDung.noiDung, // Truncate long content for overview
+                    noiDung: noiDung.noiDung,
                     loaiNoiDung: noiDung.loaiNoiDung,
                     hanNop: noiDung.hanNop,
                     ngayNop: noiDung.ngayNop,
-                    trangThai: noiDung.trangThai,
+                    status: noiDung.status,
                     ngayTao: noiDung.ngayTao,
-
+                    // Thêm thông tin file nếu có
+                    files: noiDung.chiTiets?.map(chiTiet => ({
+                        id: chiTiet.id,
+                        loaiChiTiet: chiTiet.loaiChiTiet,
+                        filePath: chiTiet.filePath,
+                        fileName: chiTiet.fileName,
+                        fileType: chiTiet.fileType,
+                        ngayTao: chiTiet.ngayTao
+                    })) || []
                 })) || []
             })) || []
         };
@@ -329,7 +354,6 @@ class ClassRepository {
 
         try {
             let whereConditions = {};
-            let includeConditions = [];
 
             // Build search condition
             let searchCondition = {};
@@ -345,7 +369,7 @@ class ClassRepository {
             if (userRole === 'giangVien') {
                 // Giảng viên: Lấy lớp mà họ dạy
                 whereConditions.idGiangVien = userId;
-                
+
                 // Nếu có filter học kỳ
                 if (hocKyId) {
                     whereConditions.idHocKy = hocKyId;
@@ -357,7 +381,7 @@ class ClassRepository {
                         ...searchCondition
                     },
                     attributes: [
-                        'id', 
+                        'id',
                         'tenLop',
                         [Sequelize.literal(`(
                             SELECT COUNT(*)
@@ -417,15 +441,15 @@ class ClassRepository {
             } else if (userRole === 'sinhVien') {
                 // Sinh viên: Lấy lớp mà họ đăng ký
                 // Sử dụng subquery để filter lớp sinh viên đã đăng ký
-                
+
                 const studentClassIds = await Lop_SinhVien.findAll({
                     where: { idSinhVien: userId },
                     attributes: ['idLop'],
                     raw: true
                 });
-                
+
                 const classIds = studentClassIds.map(item => item.idLop);
-                
+
                 if (classIds.length === 0) {
                     return {
                         classes: [],
@@ -440,7 +464,7 @@ class ClassRepository {
                     id: { [Op.in]: classIds },
                     ...searchCondition
                 };
-                
+
                 if (hocKyId) {
                     whereConditions.idHocKy = hocKyId;
                 }
@@ -448,7 +472,7 @@ class ClassRepository {
                 const { count, rows } = await Lop.findAndCountAll({
                     where: whereConditions,
                     attributes: [
-                        'id', 
+                        'id',
                         'tenLop',
                         [Sequelize.literal(`(
                             SELECT COUNT(*)
@@ -523,6 +547,206 @@ class ClassRepository {
             }
             // Otherwise it's a database error
             throw new DatabaseError('Lỗi khi truy vấn lớp học của người dùng từ cơ sở dữ liệu');
+        }
+    }
+
+
+    async findStudentsInClass(classId, filters = {}) {
+        const { page = 1, limit = 20, search = null } = filters;
+        const offset = (page - 1) * limit;
+
+        let searchCondition = {};
+        if (search) {
+            searchCondition = {
+                '$sinhVien.ten$': { [Op.like]: `%${search}%` }
+            };
+        }
+
+        try {
+            const { count, rows } = await Lop_SinhVien.findAndCountAll({
+                where: {
+                    idLop: classId,
+                    ...searchCondition
+                },
+                include: [{
+                    model: NguoiDung,
+                    as: 'sinhVien',
+                    attributes: ['id', 'ten', 'email', 'avatar'],
+                    required: true
+                }],
+                limit: limit,
+                offset: offset,
+                order: [[{ model: NguoiDung, as: 'sinhVien' }, 'ten', 'ASC']],
+                distinct: true
+            });
+
+            const students = rows.map(record => ({
+                id: record.sinhVien.id,
+                ten: record.sinhVien.ten,
+                email: record.sinhVien.email,
+                avatar: record.sinhVien.avatar,
+            }));
+
+            return {
+                students,
+                total: count,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(count / limit)
+            };
+
+        } catch (error) {
+            console.error('Database lỗi ở findStudentsInClass:', error);
+            throw new DatabaseError('Lỗi khi truy vấn danh sách sinh viên trong lớp');
+        }
+    }
+
+    async addStudentToClass(classId, studentId) {
+        try {
+            const enrollment = await Lop_SinhVien.create({
+                idLop: classId,
+                idSinhVien: studentId,
+            });
+            
+            return enrollment;
+        } catch (error) {
+            // Handle duplicate key error (if student already in class)
+            if (error.name === 'SequelizeUniqueConstraintError') {
+                throw new DatabaseError('Sinh viên đã đăng ký lớp này');
+            }
+            
+            console.error('Database error in addStudentToClass:', error);
+            throw new DatabaseError('Lỗi khi thêm sinh viên vào lớp');
+        }
+    }
+    
+    // Helper method to check if student is already in class
+    async findStudentInClass(classId, studentId) {
+        try {
+            return await Lop_SinhVien.findOne({
+                where: {
+                    idLop: classId,
+                    idSinhVien: studentId
+                }
+            });
+        } catch (error) {
+            console.error('Database error in findStudentInClass:', error);
+            return null;
+        }
+    }
+    
+
+    async removeStudentFromClass(classId, studentId) {
+        try {
+            const deletedRows = await Lop_SinhVien.destroy({
+                where: {
+                    idLop: classId,
+                    idSinhVien: studentId
+                }
+            });
+            
+            if (deletedRows === 0) {
+                throw new DatabaseError('Không tìm thấy bản ghi để xóa');
+            }
+            
+            return deletedRows;
+        } catch (error) {
+            if (error instanceof DatabaseError) {
+                throw error;
+            }
+            console.error('Database error in removeStudentFromClass:', error);
+            throw new DatabaseError('Lỗi khi xóa sinh viên khỏi lớp');
+        }
+    }
+
+    async addStudentsBulk(classId, students) {
+        try {
+            // 1. Tìm các sinh viên đã có trong lớp
+            const existingEnrollments = await Lop_SinhVien.findAll({
+                where: {
+                    idLop: classId,
+                    idSinhVien: { [Op.in]: students.map(s => s.idSinhVien) }
+                },
+                attributes: ['idSinhVien']
+            });
+
+            const existingStudentIds = new Set(existingEnrollments.map(e => e.idSinhVien));
+
+            // 2. Phân loại sinh viên: new vs existing
+            const newStudents = students.filter(s => !existingStudentIds.has(s.idSinhVien));
+            const skippedStudents = students.filter(s => existingStudentIds.has(s.idSinhVien));
+
+            // 3. Bulk insert chỉ sinh viên mới
+            let createdRecords = [];
+            if (newStudents.length > 0) {
+                const enrollmentData = newStudents.map(student => ({
+                    idLop: classId,
+                    idSinhVien: student.idSinhVien
+                }));
+
+                createdRecords = await Lop_SinhVien.bulkCreate(enrollmentData, {
+                    returning: true
+                });
+            }
+
+            return {
+                created: createdRecords.length,
+                skipped: skippedStudents.length,
+                total: students.length,
+                details: {
+                    createdStudents: newStudents.map(s => s.idSinhVien),
+                    skippedStudents: skippedStudents.map(s => s.idSinhVien),
+                    records: createdRecords
+                }
+            };
+
+        } catch (error) {
+            console.error('Database error in addStudentsBulk:', error);
+            throw new DatabaseError('Lỗi khi thêm danh sách sinh viên vào lớp');
+        }
+    }
+
+    async removeStudentsBulk(classId, studentIds) {
+        try {
+            // 1. Tìm các sinh viên hiện có trong lớp (để biết ai sẽ bị xóa)
+            const existingEnrollments = await Lop_SinhVien.findAll({
+                where: {
+                    idLop: classId,
+                    idSinhVien: { [Op.in]: studentIds }
+                },
+                attributes: ['idSinhVien']
+            });
+
+            const existingStudentIds = existingEnrollments.map(e => e.idSinhVien);
+
+            // 2. Phân loại: found vs not found
+            const foundStudents = studentIds.filter(id => existingStudentIds.includes(id));
+            const notFoundStudents = studentIds.filter(id => !existingStudentIds.includes(id));
+
+            // 3. Bulk delete chỉ những sinh viên có trong lớp
+            let deletedRows = 0;
+            if (foundStudents.length > 0) {
+                deletedRows = await Lop_SinhVien.destroy({
+                    where: {
+                        idLop: classId,
+                        idSinhVien: { [Op.in]: foundStudents }
+                    }
+                });
+            }
+
+            return {
+                deleted: deletedRows,
+                requested: studentIds.length,
+                notFound: notFoundStudents.length,
+                details: {
+                    deletedStudents: foundStudents,
+                    notFoundStudents: notFoundStudents
+                }
+            };
+
+        } catch (error) {
+            console.error('Database error in removeStudentsBulk:', error);
+            throw new DatabaseError('Lỗi khi xóa danh sách sinh viên khỏi lớp');
         }
     }
 }

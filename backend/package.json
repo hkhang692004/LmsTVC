@@ -12,14 +12,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "connect-mongo": "^6.0.0",
+    "cloudinary": "^2.5.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "express-session": "^1.18.2",
-    "react-client-session": "^0.0.8",
-    "sequelize": "^6.37.7"
+    "multer": "^1.4.5-lts.1",
+    "sequelize": "^6.35.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
