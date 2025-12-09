@@ -1,5 +1,5 @@
 import TopicService from '../services/topicService.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import  asyncHandler  from '../utils/asyncHandler.js';
 import  ResponseUtil  from '../utils/response.js';
 
 class TopicController {

@@ -42,11 +42,7 @@ class ExamController {
     }
     
     // === EXAM CONTROL ===
-    openExam(req, res) {
-        
-    }
-    
-    closeExam(req, res) {
+    updateExamStatus(req, res) {
         
     }
     

@@ -164,7 +164,6 @@ class ClassService {
             return student.idSinhVien;
         });
 
-        // 4. Batch validate students (fix N+1 query)
         const validStudents = await userRepository.findByIds(studentIds, { role: 'sinhVien' });
         const validStudentIds = new Set(validStudents.map(s => s.id));
         

@@ -1,7 +1,8 @@
 import { ChuDe, NoiDung, NoiDungChiTiet } from '../models/index.js';
 import { DatabaseError } from '../utils/errors.js';
 import { Op } from 'sequelize';
-import { sequelize } from '../config/db.js';
+import db from "../config/db.js";
+const { sequelize, Sequelize } = db;
 
 class TopicRepository {
 

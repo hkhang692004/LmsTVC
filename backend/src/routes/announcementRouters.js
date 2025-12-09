@@ -4,7 +4,7 @@ import NotificationController from "../controllers/notificationController.js";
 const router = express.Router();
 
 // === NOTIFICATIONS ===
-// GET /api/notifications?lop=123&dadoc=false
+// GET /api/notifications
 router.get("/", NotificationController.getAllNotifications);
 router.get("/me", NotificationController.getMyNotifications);
 router.post("/", NotificationController.createNotification);

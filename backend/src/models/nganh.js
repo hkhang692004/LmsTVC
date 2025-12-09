@@ -1,5 +1,5 @@
-import { sequelize, Sequelize } from "../config/db.js";
-
+import db from "../config/db.js";
+const { sequelize, Sequelize } = db;
 const Nganh = sequelize.define('Nganh', {
     id: {
         type: Sequelize.STRING,

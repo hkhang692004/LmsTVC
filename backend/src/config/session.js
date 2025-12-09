@@ -1,6 +1,4 @@
 import session from 'express-session';
-import MongoStore from 'connect-mongo'; // Nếu dùng MongoDB
-// import SequelizeStore from 'connect-session-sequelize'; // Nếu dùng MySQL với Sequelize
 
 /**
  * Session configuration cho Express
@@ -43,11 +41,6 @@ function getSessionStore() {
     const dbType = process.env.SESSION_STORE || 'memory';
     
     switch (dbType) {
-        case 'memory':
-            // Memory store (development only)
-            console.log('🚀 Using memory store for sessions');
-            return undefined; // Express session default memory store
-
         case 'mongodb':
             return MongoStore.create({
                 mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/lms-sessions'

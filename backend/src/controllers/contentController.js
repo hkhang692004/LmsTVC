@@ -1,5 +1,5 @@
 import ContentService from '../services/contentService.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import  asyncHandler  from '../utils/asyncHandler.js';
 import ResponseUtil from '../utils/response.js';
 import fs from 'fs/promises';
 
@@ -8,9 +8,9 @@ class ContentController {
     // GET /api/content/:id
     getContentById = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        
+
         const content = await ContentService.getContentById(id);
-        
+
         ResponseUtil.success(res, content, 'Lấy thông tin nội dung thành công');
     });
 
@@ -28,7 +28,6 @@ class ContentController {
             status: req.body.status
         };
 
-        // Extract files from multer if multipart/form-data
         const files = req.files || [];
 
         const result = await ContentService.createContent(contentData, files);
@@ -39,11 +38,11 @@ class ContentController {
     // PUT /api/content/:id
     updateContent = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        
+
         // Extract update data
         const updateData = {};
         const allowedFields = [
-            'tieuDe', 'noiDung', 'loaiNoiDung', 'hanNop', 
+            'tieuDe', 'noiDung', 'loaiNoiDung', 'hanNop',
             'status', 'idNoiDungCha'
         ];
 
@@ -65,9 +64,9 @@ class ContentController {
     // DELETE /api/content/:id
     deleteContent = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        
+
         await ContentService.deleteContent(id);
-        
+
         ResponseUtil.success(res, null, 'Xóa nội dung thành công');
     });
 
@@ -90,19 +89,19 @@ class ContentController {
     // DELETE /api/content/files/:id
     deleteFile = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        
+
         await ContentService.deleteFile(id);
-        
+
         ResponseUtil.success(res, null, 'Xóa file thành công');
     });
 
     // GET /api/content/:assignmentId/assignment-view
     getAssignmentView = asyncHandler(async (req, res) => {
         const { assignmentId } = req.params;
-        const userId = req.user.id; 
+        const userId = req.user.id;
 
         const result = await ContentService.getAssignmentView(assignmentId, userId);
-        
+
         ResponseUtil.success(res, result, 'Lấy thông tin bài tập thành công');
     });
 

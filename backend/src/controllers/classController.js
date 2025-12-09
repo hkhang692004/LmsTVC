@@ -231,7 +231,6 @@ class ClassController {
         ResponseUtil.success(res, result, 'Xóa danh sách sinh viên khỏi lớp thành công');
     });
 
-    // REMOVED: updateStudentsBulk (không có gì để update trong junction table)
 }
 
 export default new ClassController();

@@ -17,7 +17,7 @@ setupSession(app);
 app.use('/api', routes);
 
 // 404 handler
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
     const error = new Error(`Route ${req.originalUrl} not found`);
     error.statusCode = 404;
     next(error);

@@ -1,24 +1,26 @@
 import { NoiDung, NoiDungChiTiet } from '../models/index.js';
-import { 
-    AppError, 
-    ValidationError, 
-    NotFoundError, 
+import {
+    AppError,
+    ValidationError,
+    NotFoundError,
     ConflictError,
-    DatabaseError 
+    DatabaseError
 } from '../utils/errors.js';
 import { Op } from 'sequelize';
-import { sequelize } from '../config/db.js';
+import  sequelize  from '../config/db.js';
+import { deleteFiles } from '../utils/cloudinaryUtils.js';
+
 
 class ContentRepository {
-    
+
     // Create content with files in transaction
     async createContentWithFiles(contentData, fileDetails = []) {
         const transaction = await sequelize.transaction();
-        
+
         try {
             // Create content
             const content = await NoiDung.create(contentData, { transaction });
-            
+
             // Create file details if provided
             if (fileDetails.length > 0) {
                 const fileData = fileDetails.map(file => ({
@@ -27,9 +29,9 @@ class ContentRepository {
                 }));
                 await NoiDungChiTiet.bulkCreate(fileData, { transaction });
             }
-            
+
             await transaction.commit();
-            
+
             // Return content with files
             return await this.findByIdWithFiles(content.id);
         } catch (error) {
@@ -49,7 +51,7 @@ class ContentRepository {
     // Update content with new files
     async updateContentWithFiles(contentId, updateData, newFileDetails = [], remainFileIds = []) {
         const transaction = await sequelize.transaction();
-        
+
         try {
             // Get files to delete from Cloudinary first (before database transaction)
             let filesToDelete = [];
@@ -73,13 +75,12 @@ class ContentRepository {
 
             // Delete files from Cloudinary before database transaction
             if (filesToDelete.length > 0) {
-                const { deleteFiles } = require('../utils/cloudinaryUtils');
                 const idsToDelete = filesToDelete.map(f => f.id);
-                
+
                 try {
                     const deleteResult = await deleteFiles(idsToDelete);
                     console.log(`✅ Bulk delete result: ${deleteResult.successCount}/${deleteResult.total} files deleted`);
-                    
+
                     if (deleteResult.failed.length > 0) {
                         console.warn('❌ Some files failed to delete from Cloudinary:', deleteResult.failed);
                     }
@@ -94,7 +95,7 @@ class ContentRepository {
                 where: { id: contentId },
                 transaction
             });
-            
+
             // Delete files from database
             if (filesToDelete.length > 0) {
                 const idsToDelete = filesToDelete.map(f => f.id);
@@ -106,7 +107,7 @@ class ContentRepository {
                     transaction
                 });
             }
-            
+
             // Add new files if provided
             if (newFileDetails.length > 0) {
                 const fileData = newFileDetails.map(file => ({
@@ -115,9 +116,9 @@ class ContentRepository {
                 }));
                 await NoiDungChiTiet.bulkCreate(fileData, { transaction });
             }
-            
+
             await transaction.commit();
-            
+
             // Return updated content with files
             return await this.findByIdWithFiles(contentId);
         } catch (error) {
@@ -155,11 +156,11 @@ class ContentRepository {
                 }
             ]
         });
-        
+
         if (!content) {
             throw new NotFoundError('Không tìm thấy nội dung');
         }
-        
+
         return content;
     }
 
@@ -188,24 +189,24 @@ class ContentRepository {
     // Delete content (cascade delete files)
     async delete(contentId) {
         const transaction = await sequelize.transaction();
-        
+
         try {
             // Delete files first
             await NoiDungChiTiet.destroy({
                 where: { idNoiDung: contentId },
                 transaction
             });
-            
+
             // Delete content
             const deletedRows = await NoiDung.destroy({
                 where: { id: contentId },
                 transaction
             });
-            
+
             if (deletedRows === 0) {
                 throw new NotFoundError('Không tìm thấy nội dung để xóa');
             }
-            
+
             await transaction.commit();
             return { message: 'Xóa nội dung thành công' };
         } catch (error) {
@@ -217,22 +218,22 @@ class ContentRepository {
     // File operations
     async findFileById(fileId) {
         const file = await NoiDungChiTiet.findByPk(fileId);
-        
+
         if (!file) {
             throw new NotFoundError('Không tìm thấy file');
         }
-        
+
         return file;
     }
 
     async deleteFile(fileId) {
         // Kiểm tra file tồn tại trước
         const file = await NoiDungChiTiet.findByPk(fileId);
-        
+
         if (!file) {
             throw new NotFoundError('Không tìm thấy file để xóa');
         }
-        
+
         const deletedRows = await NoiDungChiTiet.destroy({
             where: { id: fileId }
         });
@@ -255,7 +256,7 @@ class ContentRepository {
                         as: 'NoiDungChiTiets',
                         required: false,
                         attributes: [
-                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath', 
+                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
                             'fileName', 'fileType', 'fileSize', 'ngayTao'
                         ]
                     }
@@ -273,7 +274,7 @@ class ContentRepository {
     // Delete content với bulk Cloudinary delete  
     async deleteWithFiles(contentId) {
         const transaction = await sequelize.transaction();
-        
+
         try {
             // Get all files for this content first
             const files = await NoiDungChiTiet.findAll({
@@ -284,9 +285,8 @@ class ContentRepository {
 
             // Bulk delete from Cloudinary if files exist
             if (files.length > 0) {
-                const { deleteFiles } = require('../utils/cloudinaryUtils');
                 const fileIds = files.map(f => f.id);
-                
+
                 try {
                     const deleteResult = await deleteFiles(fileIds);
                     console.log(`✅ Bulk deleted ${deleteResult.successCount}/${deleteResult.total} files from Cloudinary`);
@@ -301,17 +301,17 @@ class ContentRepository {
                 where: { idNoiDung: contentId },
                 transaction
             });
-            
+
             // Delete content
             const deletedRows = await NoiDung.destroy({
                 where: { id: contentId },
                 transaction
             });
-            
+
             if (deletedRows === 0) {
                 throw new NotFoundError('Không tìm thấy nội dung để xóa');
             }
-            
+
             await transaction.commit();
             return { message: 'Xóa nội dung thành công' };
         } catch (error) {

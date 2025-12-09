@@ -16,12 +16,12 @@ router.put("/:id", ExamController.updateExam);
 router.delete("/:id", ExamController.deleteExam);
 
 // GET /api/exams/:id/questions - Questions for exam (Teacher: with answers, Student: without answers)
+// Query: ?page=1&limit=20
 router.get("/:id/questions", ExamController.getExamQuestions);
 
-// POST /api/exams/:id/open - Mở bài thi
-// POST /api/exams/:id/close - Đóng bài thi
-router.post("/:id/open", ExamController.openExam);
-router.post("/:id/close", ExamController.closeExam);
+// PATCH /api/exams/:id/status - Cập nhật trạng thái bài thi
+// Body: { status: "open" | "closed" }
+router.patch("/:id/status", ExamController.updateExamStatus);
 
 // === EXAM STATISTICS & SUMMARY ===
 // GET /api/exams/:id/stats - Thống kê bài thi

@@ -1,4 +1,3 @@
-import express from "express";
 import DepartmentService from "../services/departmentService.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ResponseUtil from "../utils/response.js";
@@ -7,7 +6,7 @@ import { ValidationError, NotFoundError } from "../utils/errors.js";
 class DepartmentController {
     getAllDepartments = asyncHandler(async (req, res) => {
         const { search, page = 1, limit = 20 } = req.query;
-        
+
         if (page && (isNaN(page) || page < 1)) {
             throw new ValidationError('Page phải là số dương');
         }
@@ -31,12 +30,12 @@ class DepartmentController {
             totalPages: result.totalPages
         }, 'Lấy danh sách ngành thành công');
     });
-    
+
     getDepartmentById = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        
+
         const result = await DepartmentService.getDepartmentById(id);
-        
+
         if (!result) {
             throw new NotFoundError('Không tìm thấy ngành');
         }
