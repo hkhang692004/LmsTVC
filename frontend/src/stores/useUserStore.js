@@ -1,5 +1,5 @@
 import UserService from "@/services/userService";
-import create from "zustand";
+import { create } from "zustand";
 
 
 const useUserStore = create((set, get) => ({
@@ -10,8 +10,6 @@ const useUserStore = create((set, get) => ({
   setUser: (u) => set({ user: u, error: null }),
   clearUser: () => set({ user: null, error: null }),
 
-  // trước: dùng axiosClient trực tiếp
-// sau:
 
 
 fetchProfile: async (opts = {}) => {
