@@ -17,7 +17,7 @@ router.post("/change-password", checkLogin, UserController.changePassword);
 
 // Admin only routes
 router.get("/", checkAdmin, UserController.getAllUsers);
-router.post("/", checkAdmin, uploadSingle('avatar'), UserController.createUser);
+router.post("/", uploadSingle('avatar'), UserController.createUser);
 router.get("/:id", checkRole(['admin', 'giangVien']), UserController.getUserById);
 router.put("/:id", uploadSingle('avatar'), UserController.updateUser);
 router.delete("/:id", checkAdmin, UserController.deleteUser);

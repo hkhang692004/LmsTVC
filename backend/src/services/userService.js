@@ -36,9 +36,6 @@ class UserService {
             throw new ValidationError('Email không đúng định dạng');
         }
 
-        if (password.length < 6) {
-            throw new ValidationError('Mật khẩu phải có ít nhất 6 ký tự');
-        }
 
         if (!['admin', 'giangVien', 'sinhVien'].includes(role)) {
             throw new ValidationError('Role không hợp lệ');

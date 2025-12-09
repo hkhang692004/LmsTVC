@@ -1,5 +1,5 @@
 import express from "express";
-import nguoiDungRoutes from "./userRouters.js";
+import userRoutes from "./userRouters.js";
 import classRoutes from "./classRouters.js";
 import topicRoutes from "./topicRouters.js";
 import contentRoutes from "./contentRouters.js";
@@ -16,7 +16,7 @@ import yearRoutes from "./yearRouters.js";
 const router = express.Router();
 
 // User management
-router.use("/users", nguoiDungRoutes);
+router.use("/users", userRoutes);
 
 // Academic structure
 router.use("/years", yearRoutes);                    // NamHoc
