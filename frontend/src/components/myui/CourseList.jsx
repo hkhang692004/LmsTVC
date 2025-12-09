@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import classService from '@/services/classService'
+import useClassStore from '@/stores/useClassStore'
 // Styles và pattern như bạn đã có
 const courseStyles = [
     { color: 'bg-blue-500', pattern: 'hexagon', patternOpacity: 0.15 },
@@ -40,16 +41,14 @@ const CirclesPattern = ({ id, opacity }) => (
 )
 
 
-const CourseCard = ({ title, lecturer, index }) => {
+const CourseCard = ({ course, index }) => {
     const style = courseStyles[index % courseStyles.length]
     const patternId = `pattern-${index}`
+    const setSelectedClass = useClassStore(state => state.setSelectedClass);
     const navigate = useNavigate();
     const handleClick = () =>{
-        navigate("/mycontent",{
-                state:{
-                    courseName: title
-                }
-
+        setSelectedClass(course);
+        navigate(`/mycontent/${course.id}`,{
         })
 
     }
@@ -73,9 +72,12 @@ const CourseCard = ({ title, lecturer, index }) => {
                 </div>
                 <div className="p-4">
                     <h3 className="font-medium text-blue-600 mb-2 hover:underline cursor-pointer line-clamp-2 text-base">
-                        {title}
+                        {course.tenLop}
                     </h3>
-                    <p className="text-sm text-gray-700">{lecturer}</p>
+                    <h3 className="font-medium text-blue-600 mb-2 hover:underline cursor-pointer line-clamp-2 text-base">
+                        {course.monHoc?.tenMon}
+                    </h3>
+                    <p className="text-sm text-gray-700">{course.giangVien?.ten}</p>
                 </div>
             </div>
         </a>
@@ -92,9 +94,7 @@ const CourseList = () => {
             setLoading (true);
             try{
                 const response = await classService.getMyClass();
-                setClasses (response.classses || []);
-
-
+                setClasses (response.data?.classes || []);
             }catch (error){
                 console.error("Lỗi khi fetch lớp học:", error);
             }finally{
@@ -108,12 +108,11 @@ const CourseList = () => {
 
     return (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 space-y-6">
-            {classes.map((course, index) => (
+            {classes.map((course) => (
                 <CourseCard
-                    key={index}
-                    title={course.title}
-                    lecturer={course.lecturer}
-                    index={index}
+                    key={course.id}
+                    course={course}
+                    index={classes.indexOf(course)}
                 />
             ))}
         </div>

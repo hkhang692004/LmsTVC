@@ -1,18 +1,36 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import MyHeader from '@/components/myui/MyHeader'
 import MyFooter from '@/components/myui/MyFooter'
 import ScrollToTop from '@/components/myui/ScrollToTop'
 import ContentList from '@/components/myui/ContentList'
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
-import mockSections from '@/mocks/mockSections'
-import { useLocation } from 'react-router-dom'
+
+import { useParams } from 'react-router-dom'
+import classService from '@/services/classService'
 
 const MyContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const location = useLocation();
-  const courseName = location.state?.courseName;
-  
+  const {classId} = useParams();
+  const [myClass,setMyClass] = useState([]);
+  const[loading,setLoading] = useState(false);
 
+  useEffect(()=>{
+    const fetchMyClass = async() =>{
+      setLoading(true);
+        try {
+          const response = await classService.getClassById(classId);
+          setMyClass(response.data?.data || []);
+        } catch (error) {
+          console.log("Lỗi khi fetch chi tiết lớp học",error);
+        } finally{
+          setLoading(false);
+        }
+    };
+    fetchMyClass();
+  },[classId]);
+
+  
+ 
   return (
     <>
       {/* Fixed Header */}
@@ -24,9 +42,9 @@ const MyContent = () => {
       <div className='flex pt-16'>
         {/* Sidebar */}
         <CourseSidebar
-          sections={mockSections}
+          
           isOpen={sidebarOpen}
-          courseName={courseName}
+          myClass={myClass}
           onClose={() => setSidebarOpen(false)}
         />
 
@@ -37,11 +55,11 @@ const MyContent = () => {
             <div className="flex flex-col my-10 lg:my-20 space-y-6">
               <div>
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
-                  {`${courseName}`}
+                  {myClass.tenLop}
                 </h2>
               </div>
               <div className='border rounded-lg border-gray-300 p-4'>
-                <ContentList courseName={courseName}/>
+                <ContentList myClass={myClass}/>
               </div>
             </div>
           </div>

@@ -1,11 +1,8 @@
-
-import axiosClient from '../lib/axios';
+import axiosClient from '../lib/axios.js';
 
 const UserService = {
-  getProfile: (opts = {}) => {
-    return axiosClient.get('/api/users/profile', {
-      skipAuthRedirect: !!opts.skipAuthRedirect
-    });
+  getProfile: () => {
+    return axiosClient.get('api/users/profile'); 
   },
 
   login: (payload) => {

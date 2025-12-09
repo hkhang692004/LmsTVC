@@ -11,9 +11,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import userService from "@/services/userService"
+import userService from "@/services/userService.js"
 
-import useUserStore from "@/stores/useUserStore"
+import useUserStore from "@/stores/useUserStore.js"
 
 
 
@@ -38,13 +38,9 @@ export function LoginForm({
 
   const onSubmit = async (data) => {
     try {
-      const response = await userService.loginUser({
-        email: data.email,
-        password: data.password,
-      });
-      const userData = response.data?.user;
+      const response = await userService.login(data);
+      const userData = response.data?.data?.user;
       useUserStore.getState().setUser(userData);
-
       toast.success("Đăng nhập thành công!");
       navigate("/mycourse");
     } catch (error) {

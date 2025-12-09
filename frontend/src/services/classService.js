@@ -5,6 +5,9 @@ const classService = {
     getMyClass: () =>{
         return axiosClient.get('/api/classes/me');
     },
+    getClassById:(id) =>{
+        return axiosClient.get(`/api/classes/${id}`);
+    },
 
 };
 

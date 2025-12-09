@@ -9,11 +9,8 @@ const Breadcrumb = ({ courseName, itemName }) => {
         
    }
     const handleSectionClick = () =>{
-        navigate("/mycontent",{
-            state:{
-               courseName: courseName
-            }
-        });
+        navigate("/mycontent"
+        );
    }
  
     return (
