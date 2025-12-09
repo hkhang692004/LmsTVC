@@ -7,7 +7,7 @@ import { setupSession } from './config/session.js';
 const app = express();
 
 //middlewares
-app.use(cors())
+app.use(cors({origin: '*',credentials: true}));
 app.use(express.json());
 
 // Setup session middleware

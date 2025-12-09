@@ -16,10 +16,10 @@ router.get("/classes", checkLogin, UserController.getUserClasses);
 router.post("/change-password", checkLogin, UserController.changePassword);
 
 // Admin only routes
-router.get("/", checkAdmin, UserController.getAllUsers);
-router.post("/", uploadSingle('avatar'), UserController.createUser);
-router.get("/:id", checkRole(['admin', 'giangVien']), UserController.getUserById);
-router.put("/:id", uploadSingle('avatar'), UserController.updateUser);
-router.delete("/:id", checkAdmin, UserController.deleteUser);
+router.get("/", checkLogin, checkAdmin, UserController.getAllUsers);
+router.post("/", checkLogin, uploadSingle('avatar'), UserController.createUser);
+router.get("/:id", checkLogin, checkRole(['admin', 'giangVien']), UserController.getUserById);
+router.put("/:id", checkLogin, uploadSingle('avatar'), UserController.updateUser);
+router.delete("/:id", checkLogin, checkAdmin, UserController.deleteUser);
 
 export default router;

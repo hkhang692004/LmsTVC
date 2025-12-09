@@ -1,0 +1,972 @@
+{
+  "info": {
+    "name": "LmsTVC Backend API Tests",
+    "description": "Collection for testing LmsTVC backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001/api",
+      "type": "string"
+    },
+    {
+      "key": "sessionCookie",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "1. Login User (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "login"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Store session cookie for subsequent requests",
+                  "if (pm.response.code === 200) {",
+                  "    const setCookie = pm.response.headers.get('Set-Cookie');",
+                  "    if (setCookie) {",
+                  "        pm.globals.set('sessionCookie', setCookie);",
+                  "        pm.collectionVariables.set('sessionCookie', setCookie);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data.user).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data.user).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get User Profile (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get profile successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ten');",
+                  "    pm.expect(pm.response.json().data).to.have.property('email');",
+                  "    pm.expect(pm.response.json().data).to.have.property('role');",
+                  "    pm.expect(pm.response.json().data).to.have.property('avatar');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Update User Profile (Protected)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten",
+                  "value": "Updated Name",
+                  "type": "text",
+                  "description": "User's full name"
+                },
+                {
+                  "key": "email", 
+                  "value": "updated@example.com",
+                  "type": "text",
+                  "description": "User's email address"
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "Profile picture file (optional)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update profile successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Get User Classes (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/classes?page=1&limit=10&hocKyId=",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "classes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit", 
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "hocKyId",
+                  "value": "",
+                  "description": "Filter by semester ID (optional)"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get user classes successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Change Password (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "change-password"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Change password successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten",
+                  "value": "New User Name",
+                  "type": "text",
+                  "description": "User's full name (required)"
+                },
+                {
+                  "key": "email",
+                  "value": "newuser@example.com",
+                  "type": "text",
+                  "description": "User's email address (required, must be unique)"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text",
+                  "description": "User's password (required, min 6 characters)"
+                },
+                {
+                  "key": "role",
+                  "value": "sinhVien",
+                  "type": "text",
+                  "description": "User role: admin, giangVien, sinhVien (default: sinhVien)"
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "Profile picture file (optional)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create user successful', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('email');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ten');",
+                  "    pm.expect(pm.response.json().data).to.have.property('role');",
+                  "    pm.expect(pm.response.json().data).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10&role=&status=&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filter by role: admin, giangVien, sinhVien"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by status: true, false"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name, email, or user ID"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get all users successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Get User by ID (Admin/Teacher)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get user by ID successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Update User by ID (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "ten",
+                  "value": "Updated User Name",
+                  "type": "text",
+                  "description": "User's full name"
+                },
+                {
+                  "key": "email",
+                  "value": "updated@example.com",
+                  "type": "text", 
+                  "description": "User's email address (must be unique)"
+                },
+                {
+                  "key": "role",
+                  "value": "giangVien",
+                  "type": "text",
+                  "description": "User role: admin, giangVien, sinhVien"
+                },
+                {
+                  "key": "password",
+                  "value": "",
+                  "type": "text",
+                  "description": "New password (optional, min 6 characters)",
+                  "disabled": true
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "Profile picture file (optional)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update user successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Delete user successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Logout User (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{sessionCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "logout"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Logout successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});",
+                  "",
+                  "// Clear session cookie",
+                  "pm.globals.unset('sessionCookie');",
+                  "pm.collectionVariables.set('sessionCookie', '');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Year Management",
+      "item": [
+        {
+          "name": "1. Get All Years (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/years?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["years"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by year (e.g., 2024)"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get all years successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "    ",
+                  "    if (pm.response.json().data.length > 0) {",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('nam');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('isCurrent');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Current Year (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/years/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["years", "current"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get current year successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('nam');",
+                  "    pm.expect(pm.response.json().data).to.have.property('isCurrent');",
+                  "    pm.expect(pm.response.json().data.isCurrent).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Get Year by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/years/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["years", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get year by ID successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('nam');",
+                  "    pm.expect(pm.response.json().data).to.have.property('isCurrent');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Semester Management",
+      "item": [
+        {
+          "name": "1. Get All Semesters (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/semesters?page=1&limit=10&namhoc=&active=",
+              "host": ["{{baseUrl}}"],
+              "path": ["semesters"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "namhoc",
+                  "value": "",
+                  "description": "Filter by academic year ID"
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "description": "Filter by active status: true/false"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get all semesters successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "    ",
+                  "    if (pm.response.json().data.length > 0) {",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('ten');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('ngayBatDau');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('ngayKetThuc');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('isActive');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('namHoc');",
+                  "        pm.expect(pm.response.json().data[0].namHoc).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0].namHoc).to.have.property('nam');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Current Semester (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/semesters/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["semesters", "current"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get current semester successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ten');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ngayBatDau');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ngayKetThuc');",
+                  "    pm.expect(pm.response.json().data).to.have.property('isActive');",
+                  "    pm.expect(pm.response.json().data).to.have.property('namHoc');",
+                  "    pm.expect(pm.response.json().data.isActive).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Get Semester by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/semesters/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["semesters", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get semester by ID successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ten');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ngayBatDau');",
+                  "    pm.expect(pm.response.json().data).to.have.property('ngayKetThuc');",
+                  "    pm.expect(pm.response.json().data).to.have.property('isActive');",
+                  "    pm.expect(pm.response.json().data).to.have.property('namHoc');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Subject Management",
+      "item": [
+        {
+          "name": "1. Get All Subjects (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects?page=1&limit=10&nganh=&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "nganh",
+                  "value": "",
+                  "description": "Filter by department ID"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by subject name"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get all subjects successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "    ",
+                  "    if (pm.response.json().data.length > 0) {",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('tenMon');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('nganh');",
+                  "        pm.expect(pm.response.json().data[0].nganh).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0].nganh).to.have.property('tenNganh');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Subject by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get subject by ID successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('tenMon');",
+                  "    pm.expect(pm.response.json().data).to.have.property('nganh');",
+                  "    pm.expect(pm.response.json().data.nganh).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data.nganh).to.have.property('tenNganh');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Department Management",
+      "item": [
+        {
+          "name": "1. Get All Departments (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/departments?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["departments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by department name"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get all departments successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "    pm.expect(pm.response.json().pagination).to.have.property('total');",
+                  "    ",
+                  "    if (pm.response.json().data.length > 0) {",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('id');",
+                  "        pm.expect(pm.response.json().data[0]).to.have.property('tenNganh');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Department by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/departments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["departments", "1"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get department by ID successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.have.property('id');",
+                  "    pm.expect(pm.response.json().data).to.have.property('tenNganh');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
