@@ -37,7 +37,5 @@ router.use("/submissions", submissionRoutes);        // BaiLam + BaiLamCauHoi + 
 router.use("/chats", chatRoutes);                    // Chat + ChatFile
 router.use("/notifications", announcementRoutes);    // ThongBao
 
-// Activities
-router.use("/activities", scheduleRoutes);           // LichHoatDong
 
 export default router;
