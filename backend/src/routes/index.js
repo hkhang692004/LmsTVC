@@ -4,7 +4,7 @@ import classRoutes from "./classRouters.js";
 import topicRoutes from "./topicRouters.js";
 import contentRoutes from "./contentRouters.js";
 import examRoutes from "./examRouters.js";
-import submissionRoutes from "./submissionRouters.js";
+import submissionRoutes from "./submissionRoutes.js";
 import chatRoutes from "./chatRouters.js";
 import scheduleRoutes from "./scheduleRouters.js";
 import announcementRoutes from "./announcementRouters.js";
@@ -30,7 +30,7 @@ router.use("/topics", topicRoutes);                 // ChuDe management
 router.use("/content", contentRoutes);               // NoiDung management (NoiDung + NoiDungChiTiet)
 
 // Assessment - Exams & Submissions
-router.use("/exams", examRoutes);                    // BaiKiemTra + CauHoi + LuaChon
+router.use("/exams", examRoutes);                    // BaiKiemTra + CauHoi + LuaChon (includes question management)
 router.use("/submissions", submissionRoutes);        // BaiLam + BaiLamCauHoi + LuaChonDaChon
 
 // Communication
