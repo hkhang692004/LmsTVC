@@ -1,18 +1,20 @@
 import React from "react";
 import ContentSection from "./ContentSection";
-import mockSections from "@/mocks/mockSections";
 
+const ContentList = ({ myClass }) => {
+    const chuDes = myClass?.chuDes || [];
 
+    if (!chuDes.length) {
+        return <p className="text-gray-500 text-center py-8">Chưa có nội dung</p>;
+    }
 
-const ContentList = ({courseName}) => {
     return (
         <div className="space-y-6">
-            {mockSections.map(section => (
+            {chuDes.map(chuDe => (
                 <ContentSection
-                    key={section.id}
-                    title={section.title}
-                    items={section.items}
-                    courseName={courseName}
+                    key={chuDe.id}
+                    title={chuDe.ten}
+                    items={chuDe.noiDungs || []}
                 />
             ))}
         </div>

@@ -35,7 +35,7 @@ function App() {
         {/* protected routes (wrapped by ProtectedRoute) */}
         <Route element={<ProtectedRoute />}>
           <Route path='/mycourse' element={<MyCoursePage />} />
-          <Route path='/mycontent' element={<MyContent />} />
+          <Route path='/mycontent/:id' element={<MyContent />} />
           <Route path='/forum' element={<Forum />} />
           <Route path='/directory' element={<Directory />} />
           <Route path='/forumcontent' element={<ForumContent />} />

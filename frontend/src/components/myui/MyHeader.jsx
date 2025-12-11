@@ -1,9 +1,37 @@
 import React, { useState } from 'react'
 import { Bell, MessageSquare, ChevronDown } from 'lucide-react'
+import useUserStore from '@/stores/useUserStore';
 
 const MyHeader = () => {
 
     const [openDropDown, setOpenDropDown] = useState(null);
+    const user = useUserStore(state => state.user);
+    const avatar = user?.avatar || null;
+    
+    // Avatar default: vòng tròn + chữ cái đầu của tên
+    const getAvatarDisplay = () => {
+      if (avatar) {
+        return (
+          <img 
+            src={avatar} 
+            alt="avatar" 
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        );
+      }
+      
+      // Avatar default - chữ cái đầu
+      const initials = user?.ten?.charAt(0).toUpperCase() || '?';
+      const bgColor = ['bg-blue-300', 'bg-purple-400', 'bg-pink-400', 'bg-green-300'][
+        (user?.id?.charCodeAt(0) || 0) % 4
+      ];
+      
+      return (
+        <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center text-white text-sm font-semibold`}>
+          {initials}
+        </div>
+      );
+    };
 
 
     return (
@@ -13,7 +41,7 @@ const MyHeader = () => {
                 <a href="/mycourse" className="block w-fit">
                     <div className="flex flex-row items-center gap-2">
                         <img
-                            src="TVCLogo.webp"
+                            src="/TVCLogo.webp"
                             alt="Logo"
                             className="h-10 w-auto"
                         />
@@ -79,9 +107,7 @@ const MyHeader = () => {
                             onClick={() => setOpenDropDown(openDropDown === "userMenu" ? null : "userMenu")}
                             className="flex items-center gap-2 hover:bg-blue-700 p-2 rounded-lg transition"
                         >
-                            <div className="h-8 w-8 rounded-full bg-yellow-400 flex items-center justify-center text-sm font-bold text-gray-800">
-                                TK
-                            </div>
+                             {getAvatarDisplay()}
                             <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-white">
                                 <path d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" fillRule="evenodd" />
                             </svg>

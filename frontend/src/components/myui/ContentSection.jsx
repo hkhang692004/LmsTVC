@@ -4,9 +4,8 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import ContentItem from "./ContentItem";
 
 
-const ContentSection = ({ title, items, courseName }) => {
+const ContentSection = ({ title, items}) => {
     const [open, setOpen] = useState(true);
-
     return (
         <div className="border rounded-lg bg-white shadow-sm">
 
@@ -49,7 +48,7 @@ const ContentSection = ({ title, items, courseName }) => {
                                 </p>
                             ) : (
                                 items.map((item) => (
-                                    <ContentItem key={item.id} item={item} courseName={courseName}  />
+                                    <ContentItem key={item.id} item={item}  />
                                 ))
                             )}
                         </div>

@@ -4,8 +4,8 @@ import SubmissionController from "../controllers/submissionController.js";
 const router = express.Router();
 
 // === SUBMISSION MANAGEMENT (BaiLam) ===
-// GET /api/submissions/:id - Chi tiết bài làm để resume sau khi F5  
-// Response: { submission, exam, questions, answers, progress, timeInfo }
+// GET /api/submissions/:id - Chi tiết bài làm để resume sau khi F5 cho sinh viên hoặc xem bài làm cho giảng viên
+// Response: { submission: { student, exam, cauHoiDaLam: [{ cauHoi, luaChonDaChons }] }, progress, timeInfo }
 router.get("/:id", SubmissionController.getSubmissionById);
 
 // POST /api/submissions - Bắt đầu làm bài (tạo BaiLam)
@@ -17,9 +17,6 @@ router.post("/", SubmissionController.startExam);
 router.post("/:id/submit", SubmissionController.submitExam);
 
 // === ANSWER MANAGEMENT (BaiLamCauHoi + LuaChonDaChon) ===
-// GET /api/submissions/:id/answers - Lấy tất cả câu trả lời của bài làm
-router.get("/:id/answers", SubmissionController.getSubmissionAnswers);
-
 // POST /api/submissions/:id/answers/:questionId - Trả lời/Sửa câu hỏi (upsert)
 // Body: { selectedChoices: [luaChonId1, luaChonId2] }
 // Response: { success: true, progress: { answered: 5, total: 20, percentage: 25 } }

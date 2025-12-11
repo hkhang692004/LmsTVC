@@ -7,27 +7,28 @@ import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
 
 import { useParams } from 'react-router-dom'
 import classService from '@/services/classService'
+import useClassStore from '@/stores/useClassStore'
 
 const MyContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const {classId} = useParams();
+  const {id} = useParams();
   const [myClass,setMyClass] = useState([]);
-  const[loading,setLoading] = useState(false);
+  const setSelectedClass = useClassStore(state => state.setSelectedClass);
 
   useEffect(()=>{
+    if (!id) return; // Skip if id is undefined
     const fetchMyClass = async() =>{
-      setLoading(true);
         try {
-          const response = await classService.getClassById(classId);
-          setMyClass(response.data?.data || []);
+          const response = await classService.getClassById(id);
+          const classData = response.data?.data || [];
+          setMyClass(classData);
+          setSelectedClass(classData);
         } catch (error) {
           console.log("Lỗi khi fetch chi tiết lớp học",error);
-        } finally{
-          setLoading(false);
         }
     };
     fetchMyClass();
-  },[classId]);
+  },[id, setSelectedClass]);
 
   
  
@@ -55,7 +56,7 @@ const MyContent = () => {
             <div className="flex flex-col my-10 lg:my-20 space-y-6">
               <div>
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
-                  {myClass.tenLop}
+                  [{myClass.hocKy?.ten}] {myClass.tenLop} - {myClass.monHoc?.tenMon}
                 </h2>
               </div>
               <div className='border rounded-lg border-gray-300 p-4'>

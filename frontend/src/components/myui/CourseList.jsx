@@ -72,11 +72,9 @@ const CourseCard = ({ course, index }) => {
                 </div>
                 <div className="p-4">
                     <h3 className="font-medium text-blue-600 mb-2 hover:underline cursor-pointer line-clamp-2 text-base">
-                        {course.tenLop}
+                      [{course.hocKy?.ten}] {course.tenLop} - {course.monHoc?.tenMon}
                     </h3>
-                    <h3 className="font-medium text-blue-600 mb-2 hover:underline cursor-pointer line-clamp-2 text-base">
-                        {course.monHoc?.tenMon}
-                    </h3>
+                    
                     <p className="text-sm text-gray-700">{course.giangVien?.ten}</p>
                 </div>
             </div>
@@ -85,36 +83,60 @@ const CourseCard = ({ course, index }) => {
 }
 
 // Component danh sách nhiều khóa học
-const CourseList = () => {
-    const [classes,setClasses] = useState([]);
-    const [loading,setLoading] = useState(false);
+const CourseList = ({ searchTerm = '', sortOption = 'name' }) => {
+    const [classes, setClasses] = useState([]);
+    const [filteredClasses, setFilteredClasses] = useState([]);
 
-    useEffect (() => {
+    useEffect(() => {
         const fetchClasses = async () => {
-            setLoading (true);
-            try{
+            try {
                 const response = await classService.getMyClass();
-                setClasses (response.data?.classes || []);
-            }catch (error){
+                const classesData = response.data?.data?.classes || [];
+                setClasses(classesData);
+                setFilteredClasses(classesData);
+            } catch (error) {
                 console.error("Lỗi khi fetch lớp học:", error);
-            }finally{
-                setLoading (false);
             }
-    };
+        };
         fetchClasses();
-    }, [])
+    }, []);
 
+    // Xử lý search và sort
+    useEffect(() => {
+        let result = [...classes]; // Copy mảng để không mutate
 
+        // Filter theo search term
+        if (searchTerm.trim()) {
+            result = result.filter(course =>
+                course.tenLop.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.monHoc?.tenMon?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.giangVien?.ten?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Sort - luôn thực hiện
+        if (sortOption === 'classname') {
+            result.sort((a, b) => a.tenLop.localeCompare(b.tenLop, 'vi'));
+        } else if (sortOption === 'coursename') {
+            result.sort((a, b) => a.monHoc?.tenMon.localeCompare(b.monHoc?.tenMon || '', 'vi'));
+        }
+
+        setFilteredClasses(result);
+    }, [searchTerm, sortOption, classes]);
 
     return (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 space-y-6">
-            {classes.map((course) => (
-                <CourseCard
-                    key={course.id}
-                    course={course}
-                    index={classes.indexOf(course)}
-                />
-            ))}
+            {filteredClasses.length > 0 ? (
+                filteredClasses.map((course) => (
+                    <CourseCard
+                        key={course.id}
+                        course={course}
+                        index={classes.indexOf(course)}
+                    />
+                ))
+            ) : (
+                <p className="col-span-full text-center text-gray-500">Không tìm thấy lớp học</p>
+            )}
         </div>
     )
 }

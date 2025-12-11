@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronDown, Menu, MoreHorizontal } from 'lucide-react';
 import { BsFiletypePdf } from "react-icons/bs";
@@ -97,11 +97,36 @@ const SidebarSection = ({ title, items, isOpen, onToggle, courseName }) => {
   );
 };
 
-const CourseSidebar = ({ sections, isOpen, onClose, courseName }) => {
-  const [openSections, setOpenSections] = useState(() =>
-    Object.fromEntries(sections.map(s => [s.id, true]))
-  );
+const CourseSidebar = ({ isOpen, onClose, myClass = {} }) => {
+  const [openSections, setOpenSections] = useState({});
   const [showMenu, setShowMenu] = useState(false);
+
+  // Xây dựng sections từ API data
+  const sections = useMemo(() => {
+    if (!myClass.chuDes || myClass.chuDes.length === 0) return [];
+    
+    return myClass.chuDes.map(chuDe => ({
+      id: chuDe.id,
+      title: chuDe.ten,
+      items: chuDe.noiDungs ? chuDe.noiDungs.map(nd => ({
+        id: nd.id,
+        ten: nd.ten,
+        loai: nd.loai,
+        url: nd.url,
+        text: nd.noiDungCon ? nd.noiDungCon.map(nc => nc.ten).join(', ') : nd.text,
+        hanNop: nd.hanNop,
+        ngayDang: nd.ngayDang,
+        trangThai: nd.trangThai
+      })) : []
+    }));
+  }, [myClass]);
+
+  // Initialize openSections
+  useMemo(() => {
+    if (sections.length > 0) {
+      setOpenSections(Object.fromEntries(sections.map(s => [s.id, true])));
+    }
+  }, [sections]);
 
   const toggleSection = (sectionId) => {
     setOpenSections(prev => ({
@@ -183,7 +208,7 @@ const CourseSidebar = ({ sections, isOpen, onClose, courseName }) => {
               items={section.items}
               isOpen={openSections[section.id]}
               onToggle={() => toggleSection(section.id)}
-              courseName={courseName}
+              courseName={myClass.tenLop}
             />
           ))}
         </div>

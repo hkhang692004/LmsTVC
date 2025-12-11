@@ -3,12 +3,22 @@ import MyFooter from '@/components/myui/MyFooter'
 import MyHeader from '@/components/myui/MyHeader'
 import CourseList from '@/components/myui/CourseList'
 import ScrollToTop from '@/components/myui/ScrollToTop'
-import React from 'react'
+import React, { useState } from 'react'
 import useUserStore from '@/stores/useUserStore'
 
 
 const MyCoursePage = () => {
     const userName = useUserStore(state => state.user?.ten);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('classname');
+
+    const handleSearchChange = (value) => {
+        setSearchTerm(value);
+    };
+
+    const handleSortChange = (value) => {
+        setSortOption(value);
+    };
 
     return (
         <>
@@ -27,11 +37,15 @@ const MyCoursePage = () => {
                             <div className='border-x border-b border-gray-300 p-4 space-y-2 '>
 
                                 {/* Tim kiem va Loc */}
-                                <InputAndFilter />
-
+                                <InputAndFilter
+                                    searchTerm={searchTerm}
+                                    sortOption={sortOption}
+                                    onSearchChange={handleSearchChange}
+                                    onSortChange={handleSortChange}
+                                />
 
                                 {/* My Course List */}
-                                <CourseList />
+                                <CourseList searchTerm={searchTerm} sortOption={sortOption} />
 
                             </div>
                         </div>
