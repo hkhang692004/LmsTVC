@@ -181,7 +181,7 @@ const ContentItem = ({ item }) => {
     // Render video YouTube inline
     if (youtubeVideoId) {
         return (
-            <div className="py-6 px-6 border-t">
+            <div id={`content-item-${item.id}`} className="py-6 px-6 border-t">
                 <h2 className="text-sm text-blue-500 font-medium mb-4">
                     {item.tieuDe}
                 </h2>

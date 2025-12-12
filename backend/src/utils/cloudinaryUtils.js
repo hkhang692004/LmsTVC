@@ -4,12 +4,14 @@ import cloudinary from '../config/cloudinary.js';
 export const uploadFiles = async (files) => {
     // Ensure files is array
     const fileArray = Array.isArray(files) ? files : [files];
+    console.log('[cloudinaryUtils] uploadFiles called with count:', fileArray.length);
     
     const results = [];
     const errors = [];
 
     for (const file of fileArray) {
         try {
+            console.log('[cloudinaryUtils] Uploading file:', file.originalname);
             const result = await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
                     {
@@ -17,8 +19,14 @@ export const uploadFiles = async (files) => {
                         folder: 'lms-uploads'
                     },
                     (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
+                        if (error) {
+                            console.error('[cloudinaryUtils] Stream error for', file.originalname, ':', error);
+                            reject(error);
+                        }
+                        else {
+                            console.log('[cloudinaryUtils] File uploaded successfully:', file.originalname, '→', result.public_id);
+                            resolve(result);
+                        }
                     }
                 );
                 uploadStream.end(file.buffer);
@@ -31,6 +39,7 @@ export const uploadFiles = async (files) => {
                 bytes: result.bytes
             });
         } catch (error) {
+            console.error('[cloudinaryUtils] Upload error for', file.originalname, ':', error.message);
             errors.push({
                 fileName: file.originalname,
                 error: error.message
@@ -40,16 +49,19 @@ export const uploadFiles = async (files) => {
 
     // Nếu có lỗi, cleanup các file đã upload thành công
     if (errors.length > 0) {
+        console.log('[cloudinaryUtils] Errors occurred, cleaning up successful uploads...');
         for (const result of results) {
             try {
                 await cloudinary.uploader.destroy(result.public_id);
+                console.log('[cloudinaryUtils] Cleaned up:', result.public_id);
             } catch (cleanupError) {
-                console.error('Failed to cleanup:', cleanupError);
+                console.error('[cloudinaryUtils] Failed to cleanup:', cleanupError);
             }
         }
         throw new Error(`Some uploads failed: ${errors.map(e => e.fileName).join(', ')}`);
     }
 
+    console.log('[cloudinaryUtils] All files uploaded successfully, count:', results.length);
     return results;
 };
 

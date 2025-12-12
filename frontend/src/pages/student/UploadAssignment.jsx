@@ -5,19 +5,22 @@ import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar';
 import MyFooter from '@/components/myui/MyFooter';
 import MyHeader from '@/components/myui/MyHeader';
 import ScrollToTop from '@/components/myui/ScrollToTop';
-import mockSections from '@/mocks/mockSections';
 import { TbFileSettings } from "react-icons/tb";
 import formatDateTime from '@/components/myui/FormatDateTime';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import useClassStore from '@/stores/useClassStore';
 
 const UploadAssignment = () => {
-    const location = useLocation();
-    const courseName = location.state?.courseName;
-    const assignmentName = location.state?.assignmentName;
-    const text = location.state?.text;
-    const hanNop = location.state?.hanNop;
-    const ngayDang = location.state?.ngayDang;
-    const trangThai = location.state?.trangThai;
+    const { id: _assignmentId } = useParams();  // Get assignmentId from URL (for future API fetch)
+    const selectedClass = useClassStore(state => state.selectedClass);
+    const selectedContent = useClassStore(state => state.selectedContent);
+    
+    const courseName = selectedClass?.tenLop || 'Không xác định';
+    const assignmentName = selectedContent?.ten || 'Bài tập';
+    const text = selectedContent?.noiDung || '';
+    const hanNop = selectedContent?.hanNop;
+    const ngayDang = selectedContent?.ngayTao;
+    const trangThai = selectedContent?.status;
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -91,9 +94,7 @@ const UploadAssignment = () => {
 
             <div className='flex pt-16'>
                 <CourseSidebar
-                    sections={mockSections}
                     isOpen={sidebarOpen}
-                    courseName={courseName}
                     onClose={() => setSidebarOpen(false)}
                 />
 

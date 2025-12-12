@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronDown, Menu, MoreHorizontal } from 'lucide-react';
 import { BsFiletypePdf } from "react-icons/bs";
@@ -10,49 +10,101 @@ import { FaFilePen } from "react-icons/fa6";
 import { Folder } from "lucide-react";
 import { PiMicrosoftWordLogoFill } from "react-icons/pi";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import useClassStore from '@/stores/useClassStore';
+import axiosClient from '@/lib/axios';
 import "../mycss/CourseSidebar.css";
 
 
-const SidebarSection = ({ title, items, isOpen, onToggle, courseName }) => {
+const SidebarSection = ({ title, items, isOpen, onToggle }) => {
   const navigate = useNavigate();
+  const setSelectedContent = useClassStore(state => state.setSelectedContent);
+
+  // Trích xuất YouTube video ID từ URL
+  const getYouTubeVideoId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
 
   const handleItemClick = (item) => {
-    switch (item.loai) {
-      case "folder":
-        navigate("/directory", { state: { folderName: item.ten, courseName } });
-        break;
-      case "diendan":
-        navigate("/forum", { state: { title: item.ten, courseName, text: item.text } });
-        break;
-      case "pdf":
-        if (item.url) window.open(item.url, "_blank");
-        break;
-      case "word":
-        if (item.url) {
-          const viewURL = `https://docs.google.com/viewer?url=${encodeURIComponent(item.url)}&embedded=true`;
-          window.open(viewURL, "_blank");
+    const type = item.loaiNoiDung || item.type;
+    
+    console.log("Item clicked:", item);
+    console.log("Item type:", type);
+    console.log("Item chiTiets:", item.chiTiets);
+    
+    // Kiểm tra nếu là YouTube video
+    const isYouTube = item.chiTiets && item.chiTiets.length > 0 &&
+                     item.chiTiets[0].loaiChiTiet === 'video' && 
+                     (item.chiTiets[0].filePath?.includes('youtube.com') || item.chiTiets[0].filePath?.includes('youtu.be')) &&
+                     getYouTubeVideoId(item.chiTiets[0].filePath);
+    
+    console.log("Is YouTube:", isYouTube);
+    
+    if (isYouTube) {
+      // Scroll tới phần YouTube video
+      const element = document.getElementById(`content-item-${item.id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+    
+    // Xử lý các loại khác
+    switch (type) {
+      case "taiLieu":
+        console.log("Processing taiLieu");
+        if (item.chiTiets && item.chiTiets.length > 0) {
+          const detail = item.chiTiets[0];
+          console.log("Detail:", detail);
+          console.log("Detail loaiChiTiet:", detail.loaiChiTiet);
+          console.log("Detail filePath:", detail.filePath);
+          
+          // File (PDF, Word, ...) - Chỉ mở file, không update breadcrumb
+          if (detail.loaiChiTiet === 'file') {
+            if (detail.fileType?.includes('docx') || detail.fileType?.includes('word')) {
+              const viewURL = `https://docs.google.com/viewer?url=${encodeURIComponent(detail.filePath)}&embedded=true`;
+              window.open(viewURL, "_blank");
+            } else {
+              window.open(detail.filePath, "_blank");
+            }
+          }
+          // Link - Chỉ mở link, không update breadcrumb
+          else if (detail.loaiChiTiet === 'duongDan') {
+            window.open(detail.filePath, "_blank");
+          }
+          // Folder - Navigate + update breadcrumb
+          else if (detail.loaiChiTiet === 'thuMuc') {
+            setSelectedContent(item);
+            navigate(`/directory/${item.id}`);
+          }
+          // Video không phải YouTube - Chỉ mở video, không update breadcrumb
+          else if (detail.loaiChiTiet === 'video') {
+            window.open(detail.filePath, "_blank");
+          }
+        } else {
+          console.log("No chiTiets found");
         }
         break;
-      case "duongdan":
-        if (item.url) window.open(item.url, "_blank");
+      case "phucDap":
+        setSelectedContent(item);
+        navigate(`/forum/${item.id}`);
         break;
-      case "text":
-        navigate("/text", { state: { textName: item.ten, courseName, text: item.text } });
+      case "baiTap":
+        setSelectedContent(item);
+        navigate(`/assignment/${item.id}`);
         break;
-      case "nopbai":
-        navigate("/assignment", {
-          state: {
-            assignmentName: item.ten,
-            courseName,
-            text: item.text,
-            hanNop: item.hanNop,
-            ngayDang: item.ngayDang,
-            trangThai: item.trangThai,
-          },
-        });
+      case "baiNop":
+        setSelectedContent(item);
+        navigate(`/test/${item.id}`);
+        break;
+      case "kiemTra":
+        setSelectedContent(item);
+        navigate(`/test/${item.id}`);
         break;
       default:
-        console.log("Loại không hỗ trợ:", item.loai);
+        console.log("Loại không hỗ trợ:", type);
     }
   };
 
@@ -86,7 +138,6 @@ const SidebarSection = ({ title, items, isOpen, onToggle, courseName }) => {
                 onClick={() => handleItemClick(item)}
                 className="flex items-center gap-3 px-4 py-2.5 pl-10 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
               >
-
                 <span className="line-clamp-1">{item.ten}</span>
               </div>
             ))}
@@ -100,26 +151,83 @@ const SidebarSection = ({ title, items, isOpen, onToggle, courseName }) => {
 const CourseSidebar = ({ isOpen, onClose, myClass = {} }) => {
   const [openSections, setOpenSections] = useState({});
   const [showMenu, setShowMenu] = useState(false);
+  const [baiKiemTras, setBaiKiemTras] = useState([]);
+  const storedMyClass = useClassStore(state => state.myClass);
+  const classId = useClassStore(state => state.classId);
+  
+  // Sử dụng myClass từ prop hoặc từ store (fallback)
+  const classData = useMemo(() => 
+    Object.keys(myClass).length > 0 ? myClass : (storedMyClass || {}),
+    [myClass, storedMyClass]
+  );
+
+  // Fetch exams riêng từ API
+  useEffect(() => {
+    if (classId) {
+      const fetchExams = async () => {
+        try {
+          const response = await axiosClient.get(`/api/exams`, {
+            params: { lopId: classId }
+          });
+          console.log('✅ Exams fetched:', response.data?.data);
+          setBaiKiemTras(response.data?.data || []);
+        } catch (error) {
+          console.error('❌ Error fetching exams:', error);
+        }
+      };
+      fetchExams();
+    }
+  }, [classId]);
 
   // Xây dựng sections từ API data
   const sections = useMemo(() => {
-    if (!myClass.chuDes || myClass.chuDes.length === 0) return [];
+    console.log("CourseSidebar classData:", classData);
+    console.log("chuDes data:", classData.chuDes);
+    console.log("baiKiemTras data:", baiKiemTras);
     
-    return myClass.chuDes.map(chuDe => ({
-      id: chuDe.id,
-      title: chuDe.ten,
-      items: chuDe.noiDungs ? chuDe.noiDungs.map(nd => ({
-        id: nd.id,
-        ten: nd.ten,
-        loai: nd.loai,
-        url: nd.url,
-        text: nd.noiDungCon ? nd.noiDungCon.map(nc => nc.ten).join(', ') : nd.text,
-        hanNop: nd.hanNop,
-        ngayDang: nd.ngayDang,
-        trangThai: nd.trangThai
-      })) : []
-    }));
-  }, [myClass]);
+    const allSections = [];
+
+    // Thêm các chủ đề
+    if (classData.chuDes && classData.chuDes.length > 0) {
+      const topicSections = classData.chuDes.map(chuDe => ({
+        id: chuDe.id,
+        title: chuDe.tenChuDe,
+        items: chuDe.noiDungs ? chuDe.noiDungs.map(nd => ({
+          id: nd.id,
+          ten: nd.tieuDe,
+          loaiNoiDung: nd.loaiNoiDung,
+          url: nd.url,
+          text: nd.files ? nd.files.map(f => f.fileName).join(', ') : nd.noiDung,
+          hanNop: nd.hanNop,
+          ngayDang: nd.ngayTao,
+          trangThai: nd.status,
+          chiTiets: nd.files || []
+        })) : []
+      }));
+      allSections.push(...topicSections);
+    }
+
+    // Thêm section bài kiểm tra (từ state, không phải classData)
+    if (baiKiemTras && baiKiemTras.length > 0) {
+      allSections.push({
+        id: '__exams__',
+        title: 'Bài kiểm tra',
+        items: baiKiemTras.map(exam => ({
+          id: exam.id,
+          ten: exam.tenBaiKiemTra,
+          type: 'kiemTra',
+          moTa: exam.moTa,
+          thoiGianBatDau: exam.thoiGianBatDau,
+          thoiGianKetThuc: exam.thoiGianKetThuc,
+          thoiLuong: exam.thoiLuong,
+          tongDiem: exam.tongDiem,
+          status: exam.status
+        }))
+      });
+    }
+
+    return allSections;
+  }, [classData, baiKiemTras]);
 
   // Initialize openSections
   useMemo(() => {
@@ -208,7 +316,6 @@ const CourseSidebar = ({ isOpen, onClose, myClass = {} }) => {
               items={section.items}
               isOpen={openSections[section.id]}
               onToggle={() => toggleSection(section.id)}
-              courseName={myClass.tenLop}
             />
           ))}
         </div>

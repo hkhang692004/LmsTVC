@@ -12,6 +12,7 @@ const ReplyForm = ({
     setReplyContent,
     replySubject,
     setReplySubject,
+    replyToTitle,
     onCancel,
     onSubmit,
 }) => {
@@ -46,7 +47,7 @@ const ReplyForm = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit({
+        onSubmit(e, {
             subject: replySubject,
             content: replyContent,
             files: attachedFiles,
@@ -56,7 +57,14 @@ const ReplyForm = ({
     return (
         <div id="reply-form" className="bg-white rounded-lg shadow border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Phúc đáp</h3>
+                <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800">Phúc đáp</h3>
+                    {replyToTitle && (
+                        <p className="text-sm text-gray-600 mt-1">
+                            Phúc đáp cho: <span className="font-medium text-blue-600">{replyToTitle}</span>
+                        </p>
+                    )}
+                </div>
                 <button
                     type="button"
                     onClick={() => setIsAdvancedMode(!isAdvancedMode)}

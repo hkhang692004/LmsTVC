@@ -20,11 +20,11 @@ const NoiDung = sequelize.define('NoiDung', {
         allowNull: true
     },
     tieuDe: {
-        type: Sequelize.STRING,
+        type: Sequelize.TEXT,
         allowNull: false
     },
     noiDung: {
-        type: Sequelize.TEXT,
+        type: Sequelize.TEXT('long'),
         allowNull: false
     },
     loaiNoiDung: {

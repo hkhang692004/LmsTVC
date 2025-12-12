@@ -14,6 +14,8 @@ import { toast } from "sonner"
 import userService from "@/services/userService.js"
 
 import useUserStore from "@/stores/useUserStore.js"
+import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 
 
 
@@ -22,6 +24,8 @@ export function LoginForm({
   className,
   ...props
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  
   const SigninSchema = z.object({
     email: z.email("Email không hợp lệ"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 kí tự")
@@ -78,7 +82,26 @@ export function LoginForm({
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="password" className="block text-sm">Mật khẩu</Label>
-                  <Input type="password" id="password" placeholder="Mật khẩu" {...register("password")} />
+                  <div className="relative">
+                    <Input 
+                      type={showPassword ? "text" : "password"} 
+                      id="password" 
+                      placeholder="Mật khẩu" 
+                      {...register("password")} 
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="text-destructive text-sm">{errors.password.message}</p>
                   )}

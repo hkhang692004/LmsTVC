@@ -8,15 +8,17 @@ import ScrollToTop from '@/components/myui/ScrollToTop'
 import { FiFileText } from "react-icons/fi";
 import { useLocation } from 'react-router-dom'
 import Breadcrumb from '@/components/myui/Breadcrump'
+import useClassStore from '@/stores/useClassStore';
 
 
 
 const Text = () => {
-    const location = useLocation();
+    const selectedClass = useClassStore(state => state.selectedClass);
+    const selectedContent = useClassStore(state => state.selectedContent);
 
-    const courseName = location.state?.courseName;
-    const text = location.state?.text;
-    const textName = location.state?.textName;
+    const courseName = selectedClass?.tenLop;
+    const text = selectedContent?.text;
+    const textName = selectedContent?.ten;
 
 
     const [sidebarOpen, setSidebarOpen] = useState(false)

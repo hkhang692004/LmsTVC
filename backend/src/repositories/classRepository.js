@@ -211,6 +211,14 @@ class ClassRepository {
                         ],
                         required: false, // LEFT JOIN to handle missing topics
                         order: [['tenChuDe', 'ASC']] // Sắp xếp chủ đề theo tên
+                    },
+                    // Thêm các bài kiểm tra của lớp
+                    {
+                        model: BaiKiemTra,
+                        as: 'baiKiemTras',
+                        attributes: ['id', 'tieuDe', 'moTa', 'thoiGianBatDau', 'thoiGianKetThuc', 'thoiLuong', 'tongDiem', 'status', 'choPhepXemDiem'],
+                        required: false,
+                        order: [['thoiGianBatDau', 'DESC']]
                     }
                 ],
                 // Add statistics as computed fields

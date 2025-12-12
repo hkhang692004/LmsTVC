@@ -14,8 +14,39 @@ class ContentController {
         ResponseUtil.success(res, content, 'Lấy thông tin nội dung thành công');
     });
 
+    // GET /api/content/:id/comments - Get post with all nested comments (ForumContent page)
+    getCommentsByContentId = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const data = await ContentService.getPostWithComments(id);
+
+        ResponseUtil.success(res, data, 'Lấy bài viết và bình luận thành công');
+    });
+
+    // GET /api/content/:id/posts - Get forum with direct posts only (Forum page)
+    getForumPosts = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const data = await ContentService.getForumWithDirectPosts(id);
+
+        ResponseUtil.success(res, data, 'Lấy diễn đàn và bài viết thành công');
+    });
+
+    // GET /api/content/:id/files - Get folder children documents (Directory page)
+    getFolderFiles = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const files = await ContentService.getFolderFiles(id);
+
+        ResponseUtil.success(res, files, 'Lấy danh sách file thành công');
+    });
+
     // POST /api/content
     createContent = asyncHandler(async (req, res) => {
+        console.log('[ContentController] createContent called');
+        console.log('[ContentController] req.files:', req.files);
+        console.log('[ContentController] req.body:', { tieuDe: req.body.tieuDe, loaiNoiDung: req.body.loaiNoiDung });
+        
         // Extract content data from body
         const contentData = {
             idChuDe: req.body.idChuDe,
@@ -29,8 +60,10 @@ class ContentController {
         };
 
         const files = req.files || [];
+        console.log('[ContentController] Extracted files count:', files.length);
 
         const result = await ContentService.createContent(contentData, files);
+        console.log('[ContentController] Content created, result id:', result?.id);
 
         ResponseUtil.success(res, result, 'Tạo nội dung thành công', 201);
     });
@@ -93,6 +126,20 @@ class ContentController {
         await ContentService.deleteFile(id);
 
         ResponseUtil.success(res, null, 'Xóa file thành công');
+    });
+
+    // GET /api/content/files/:fileId/download
+    downloadFile = asyncHandler(async (req, res) => {
+        const { fileId } = req.params;
+
+        const fileData = await ContentService.getFileById(fileId);
+
+        // Set headers for download with correct filename
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.fileName)}"`);
+        res.setHeader('Content-Type', fileData.fileType || 'application/octet-stream');
+
+        // Return Cloudinary URL as redirect
+        res.redirect(fileData.filePath);
     });
 
     // GET /api/content/:assignmentId/assignment-view

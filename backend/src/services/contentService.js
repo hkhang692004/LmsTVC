@@ -8,6 +8,17 @@ import {
 
 class ContentService {
 
+    // Generate unique ID for content (ND001, ND002, etc.)
+    async generateContentId() {
+        const lastContent = await ContentRepository.findLastContent();
+        if (!lastContent || !lastContent.id) {
+            return 'ND001';
+        }
+        const lastNumber = parseInt(lastContent.id.replace('ND', ''));
+        const newNumber = String(lastNumber + 1).padStart(3, '0');
+        return `ND${newNumber}`;
+    }
+
     // Upload files to Cloudinary
     async uploadFilesToCloudinary(files) {
         if (!files || files.length === 0) {
@@ -35,6 +46,8 @@ class ContentService {
     // Tạo Content mới với optional files
     async createContent(contentData, files = []) {
         try {
+            console.log('[ContentService] createContent started with files count:', files.length);
+            
             // Validate required fields
             if (!contentData.tieuDe || !contentData.noiDung || !contentData.loaiNoiDung) {
                 throw new ValidationError('Thiếu thông tin bắt buộc: tiêu đề, nội dung hoặc loại nội dung');
@@ -43,12 +56,16 @@ class ContentService {
             if (!contentData.idChuDe) {
                 throw new ValidationError('ID chủ đề là bắt buộc');
             }
-
             if (!contentData.idNguoiDung) {
                 throw new ValidationError('ID người dùng là bắt buộc');
             }
 
+            // Generate ID for new content
+            const newId = await this.generateContentId();
+            console.log('[ContentService] Generated content ID:', newId);
+
             const newContentData = {
+                id: newId, // Add generated ID
                 idChuDe: contentData.idChuDe,
                 idNguoiDung: contentData.idNguoiDung,
                 idNoiDungCha: contentData.idNoiDungCha || null,
@@ -58,6 +75,7 @@ class ContentService {
                 hanNop: contentData.hanNop || null,
                 status: contentData.status || 'an'
             };
+            console.log('[ContentService] Prepared newContentData with id:', newId);
 
             // Validate enum values
             const validLoaiNoiDung = ['taiLieu', 'phucDap', 'baiTap', 'baiNop'];
@@ -76,20 +94,28 @@ class ContentService {
             let fileDetails = [];
             if (files && files.length > 0) {
                 try {
+                    console.log('[ContentService] Starting file upload to Cloudinary, file count:', files.length);
                     const uploadedFiles = await this.uploadFilesToCloudinary(files);
+                    console.log('[ContentService] Uploaded files count:', uploadedFiles.length);
                     // Add idNoiDung will be set by Repository after content creation
                     fileDetails = uploadedFiles;
                 } catch (uploadError) {
+                    console.error('[ContentService] File upload error:', uploadError);
                     throw new ValidationError(`File upload failed: ${uploadError.message}`);
                 }
+            } else {
+                console.log('[ContentService] No files to upload');
             }
 
             // Create content with files in transaction
+            console.log('[ContentService] Creating content with repository...');
             const result = await ContentRepository.createContentWithFiles(newContentData, fileDetails);
+            console.log('[ContentService] Content created successfully, id:', result?.id);
 
             return result;
         } catch (error) {
-            // Repository handles Cloudinary upload/cleanup
+            console.error('[ContentService] Error in createContent:', error.message);
+            console.error('[ContentService] Error stack:', error.stack);
             throw error;
         }
     }
@@ -105,6 +131,90 @@ class ContentService {
         }
 
         return content;
+    }
+
+    // Get comments (forum discussions) for a content
+    // Get direct comments only (for Forum page listing)
+    async getCommentsByContentId(contentId) {
+        const comments = await ContentRepository.findCommentsByParentId(contentId);
+        return comments;
+    }
+
+    // Get forum with direct children only (for Forum page)
+    async getForumWithDirectPosts(forumId) {
+        try {
+            console.log('[ContentService] getForumWithDirectPosts for:', forumId);
+            
+            // Fetch the forum content
+            const forum = await ContentRepository.findByIdWithFiles(forumId);
+            if (!forum) {
+                throw new NotFoundError('Không tìm thấy diễn đàn');
+            }
+            console.log('[ContentService] Forum found:', forum.id);
+            
+            // Fetch ONLY direct children posts (no nested)
+            const replies = await ContentRepository.findCommentsByParentId(forumId);
+            console.log('[ContentService] Direct posts count:', replies.length);
+            
+            // Add reply count for each post (count all nested replies)
+            const repliesWithCount = await Promise.all(replies.map(async (post) => {
+                const allReplies = await ContentRepository.findAllCommentsByParentIdRecursive(post.id);
+                return {
+                    ...post.toJSON(),
+                    replyCount: allReplies.length
+                };
+            }));
+            
+            return {
+                post: forum,
+                replies: repliesWithCount
+            };
+        } catch (error) {
+            console.error('[ContentService] getForumWithDirectPosts error:', error);
+            throw error;
+        }
+    }
+
+    // Get post with all its comments/replies (including nested, flat list for ForumContent page)
+    async getPostWithComments(contentId) {
+        try {
+            console.log('[ContentService] getPostWithComments for:', contentId);
+            
+            // Fetch the parent post
+            const post = await ContentRepository.findByIdWithFiles(contentId);
+            if (!post) {
+                throw new NotFoundError('Không tìm thấy bài viết');
+            }
+            console.log('[ContentService] Post found:', post.id);
+            
+            // Fetch ALL replies to this post (including nested, recursive)
+            const replies = await ContentRepository.findAllCommentsByParentIdRecursive(contentId);
+            console.log('[ContentService] Replies count (with nested):', replies.length);
+            
+            return {
+                post: post,
+                replies: replies
+            };
+        } catch (error) {
+            console.error('[ContentService] getPostWithComments error:', error);
+            throw error;
+        }
+    }
+
+    // Get folder files (children documents with loaiNoiDung = 'taiLieu')
+    async getFolderFiles(folderId) {
+        try {
+            console.log('[ContentService] getFolderFiles for:', folderId);
+            
+            // Fetch direct children with loaiNoiDung = 'taiLieu'
+            const files = await ContentRepository.findDocumentsByParentId(folderId);
+            console.log('[ContentService] Files count:', files.length);
+            
+            return files;
+        } catch (error) {
+            console.error('[ContentService] getFolderFiles error:', error);
+            throw error;
+        }
     }
 
     // Update content và files
@@ -215,6 +325,17 @@ class ContentService {
         };
 
         return await ContentRepository.update(contentId, updateData);
+    }
+
+    // Get file by ID for download
+    async getFileById(fileId) {
+        const file = await ContentRepository.findFileById(fileId);
+        
+        if (!file) {
+            throw new NotFoundError('Không tìm thấy file');
+        }
+
+        return file;
     }
 
 

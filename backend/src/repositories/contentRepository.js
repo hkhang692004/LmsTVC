@@ -1,4 +1,4 @@
-import { NoiDung, NoiDungChiTiet } from '../models/index.js';
+import { NoiDung, NoiDungChiTiet, NguoiDung } from '../models/index.js';
 import {
     AppError,
     ValidationError,
@@ -7,9 +7,10 @@ import {
     DatabaseError
 } from '../utils/errors.js';
 import { Op } from 'sequelize';
-import  sequelize  from '../config/db.js';
+import dbConfig from '../config/db.js';
 import { deleteFiles } from '../utils/cloudinaryUtils.js';
 
+const { sequelize } = dbConfig;
 
 class ContentRepository {
 
@@ -18,24 +19,40 @@ class ContentRepository {
         const transaction = await sequelize.transaction();
 
         try {
+            console.log('[ContentRepository] createContentWithFiles started, fileDetails count:', fileDetails.length);
+            
             // Create content
             const content = await NoiDung.create(contentData, { transaction });
+            console.log('[ContentRepository] Content created with ID:', content.id);
 
             // Create file details if provided
             if (fileDetails.length > 0) {
+                console.log('[ContentRepository] Creating file details...');
                 const fileData = fileDetails.map(file => ({
                     ...file,
                     idNoiDung: content.id // Set contentId for each file
                 }));
                 await NoiDungChiTiet.bulkCreate(fileData, { transaction });
+                console.log('[ContentRepository] File details created, count:', fileDetails.length);
             }
 
             await transaction.commit();
+            console.log('[ContentRepository] Transaction committed');
 
             // Return content with files
             return await this.findByIdWithFiles(content.id);
         } catch (error) {
             await transaction.rollback();
+            console.log('[ContentRepository] Transaction rolled back');
+            
+            console.error('=== ERROR in createContentWithFiles ===');
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            if (error.errors) {
+                console.error('Validation errors:', error.errors);
+            }
+            console.error('Full error:', error);
+            
             // Re-throw with more context if it's a database error
             if (error.name === 'SequelizeValidationError') {
                 throw new ValidationError('Dữ liệu không hợp lệ khi tạo nội dung');
@@ -138,15 +155,41 @@ class ContentRepository {
         const content = await NoiDung.findByPk(contentId, {
             include: [
                 {
+                    model: NguoiDung,
+                    as: 'nguoiTao',
+                    required: false,
+                    attributes: ['id', 'ten', 'email']
+                },
+                {
                     model: NoiDungChiTiet,
                     as: 'chiTiets',
                     required: false
                 },
                 {
                     model: NoiDung,
+                    as: 'noiDungCha',
+                    required: false,
+                    attributes: ['id', 'tieuDe', 'noiDung', 'idNguoiDung'],
+                    include: [
+                        {
+                            model: NguoiDung,
+                            as: 'nguoiTao',
+                            required: false,
+                            attributes: ['id', 'ten', 'email']
+                        }
+                    ]
+                },
+                {
+                    model: NoiDung,
                     as: 'noiDungCon',
                     required: false,
                     include: [
+                        {
+                            model: NguoiDung,
+                            as: 'nguoiTao',
+                            required: false,
+                            attributes: ['id', 'ten', 'email']
+                        },
                         {
                             model: NoiDungChiTiet,
                             as: 'chiTiets',
@@ -317,6 +360,216 @@ class ContentRepository {
         } catch (error) {
             await transaction.rollback();
             throw error;
+        }
+    }
+
+    // Find comments (child contents) by parent content ID và loaiNoiDung = 'phucDap' - WITH NESTED REPLIES
+    // Find direct comments/replies only (no nested)
+    async findCommentsByParentId(parentContentId) {
+        try {
+            const comments = await NoiDung.findAll({
+                where: {
+                    idNoiDungCha: parentContentId,
+                    loaiNoiDung: 'phucDap'
+                },
+                include: [
+                    {
+                        model: NguoiDung,
+                        as: 'nguoiTao',
+                        required: false,
+                        attributes: ['id', 'ten', 'email']
+                    },
+                    {
+                        model: NoiDungChiTiet,
+                        as: 'chiTiets',
+                        required: false,
+                        attributes: [
+                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
+                            'fileName', 'fileType', 'fileSize', 'ngayTao'
+                        ]
+                    },
+                    {
+                        model: NoiDung,
+                        as: 'noiDungCha',
+                        required: false,
+                        attributes: ['id', 'tieuDe', 'noiDung', 'idNguoiDung'],
+                        include: [
+                            {
+                                model: NguoiDung,
+                                as: 'nguoiTao',
+                                required: false,
+                                attributes: ['id', 'ten', 'email']
+                            }
+                        ]
+                    }
+                ],
+                order: [['ngayTao', 'DESC']],
+                attributes: [
+                    'id', 'idChuDe', 'idNguoiDung', 'idNoiDungCha', 'tieuDe',
+                    'noiDung', 'loaiNoiDung', 'hanNop', 'ngayNop', 'status', 'ngayTao'
+                ]
+            });
+
+            // Manually load user info for each comment
+            for (let comment of comments) {
+                if (comment.idNguoiDung) {
+                    const user = await NguoiDung.findByPk(comment.idNguoiDung, {
+                        attributes: ['id', 'ten', 'email', 'avatar']
+                    });
+                    comment.dataValues.nguoiTao = user;
+                }
+            }
+
+            console.log('[ContentRepository] Found direct comments:', comments.length);
+            return comments;
+        } catch (error) {
+            console.error('Database error in findCommentsByParentId:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách bình luận');
+        }
+    }
+
+    // Find documents (taiLieu) by parent folder ID
+    async findDocumentsByParentId(parentContentId) {
+        try {
+            const documents = await NoiDung.findAll({
+                where: {
+                    idNoiDungCha: parentContentId,
+                    loaiNoiDung: 'taiLieu'
+                },
+                include: [
+                    {
+                        model: NguoiDung,
+                        as: 'nguoiTao',
+                        required: false,
+                        attributes: ['id', 'ten', 'email']
+                    },
+                    {
+                        model: NoiDungChiTiet,
+                        as: 'chiTiets',
+                        required: false,
+                        attributes: [
+                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
+                            'fileName', 'fileType', 'fileSize', 'ngayTao'
+                        ]
+                    }
+                ],
+                order: [['ngayTao', 'DESC']],
+                attributes: [
+                    'id', 'idChuDe', 'idNguoiDung', 'idNoiDungCha', 'tieuDe',
+                    'noiDung', 'loaiNoiDung', 'ngayTao'
+                ]
+            });
+
+            console.log('[ContentRepository] Found documents:', documents.length);
+            return documents;
+        } catch (error) {
+            console.error('Database error in findDocumentsByParentId:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách tài liệu');
+        }
+    }
+
+    // Find ALL replies including nested ones (recursive)
+    async findAllCommentsByParentIdRecursive(parentContentId) {
+        try {
+            const getAllRepliesRecursive = async (contentId) => {
+                const directReplies = await NoiDung.findAll({
+                    where: {
+                        idNoiDungCha: contentId,
+                        loaiNoiDung: 'phucDap'
+                    },
+                    include: [
+                        {
+                            model: NguoiDung,
+                            as: 'nguoiTao',
+                            required: false,
+                            attributes: ['id', 'ten', 'email']
+                        },
+                        {
+                            model: NoiDungChiTiet,
+                            as: 'chiTiets',
+                            required: false,
+                            attributes: [
+                                'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
+                                'fileName', 'fileType', 'fileSize', 'ngayTao'
+                            ]
+                        },
+                        {
+                            model: NoiDung,
+                            as: 'noiDungCha',
+                            required: false,
+                            attributes: ['id', 'tieuDe', 'noiDung', 'idNguoiDung'],
+                            include: [
+                                {
+                                    model: NguoiDung,
+                                    as: 'nguoiTao',
+                                    required: false,
+                                    attributes: ['id', 'ten', 'email']
+                                }
+                            ]
+                        }
+                    ],
+                    order: [['ngayTao', 'DESC']],
+                    attributes: [
+                        'id', 'idChuDe', 'idNguoiDung', 'idNoiDungCha', 'tieuDe',
+                        'noiDung', 'loaiNoiDung', 'hanNop', 'ngayNop', 'status', 'ngayTao'
+                    ]
+                });
+
+                // For each direct reply, recursively fetch its children
+                let allReplies = [...directReplies];
+                for (let reply of directReplies) {
+                    const nestedReplies = await getAllRepliesRecursive(reply.id);
+                    allReplies = allReplies.concat(nestedReplies);
+                }
+
+                return allReplies;
+            };
+
+            const allComments = await getAllRepliesRecursive(parentContentId);
+
+            // Manually load user info for each comment
+            for (let comment of allComments) {
+                if (comment.idNguoiDung) {
+                    const user = await NguoiDung.findByPk(comment.idNguoiDung, {
+                        attributes: ['id', 'ten', 'email', 'avatar']
+                    });
+                    comment.dataValues.nguoiTao = user;
+                }
+            }
+
+            console.log('[ContentRepository] Found total comments (including nested):', allComments.length);
+            return allComments;
+        } catch (error) {
+            console.error('Database error in findAllCommentsByParentIdRecursive:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách bình luận');
+        }
+    }
+
+    // Find file by ID for download
+    async findFileById(fileId) {
+        try {
+            const file = await NoiDungChiTiet.findByPk(fileId, {
+                attributes: ['id', 'fileName', 'filePath', 'fileType', 'fileSize']
+            });
+            return file;
+        } catch (error) {
+            console.error('Error finding file by ID:', error);
+            throw error;
+        }
+    }
+
+    // Find last content by ID to generate next ID
+    async findLastContent() {
+        try {
+            const content = await NoiDung.findOne({
+                order: [['id', 'DESC']],
+                attributes: ['id'],
+                raw: true
+            });
+            return content;
+        } catch (error) {
+            console.error('Error finding last content:', error);
+            return null;
         }
     }
 

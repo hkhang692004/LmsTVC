@@ -1,28 +1,29 @@
 import Breadcrumb from '@/components/myui/Breadcrump';
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar';
 import MyHeader from '@/components/myui/MyHeader';
-import mockSections from '@/mocks/mockSections';
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaFilePen } from "react-icons/fa6";
 import ScrollToTop from '@/components/myui/ScrollToTop';
 import MyFooter from '@/components/myui/MyFooter';
 import formatDateTime from '@/components/myui/FormatDateTime';
+import useClassStore from '@/stores/useClassStore';
 
 const TestExercise = () => {
-
-    const location = useLocation();
+    const { id: _testId } = useParams();  // Get testId from URL (for future API fetch)
     const navigate = useNavigate();
+    const selectedClass = useClassStore(state => state.selectedClass);
+    const selectedContent = useClassStore(state => state.selectedContent);
 
-    const courseName = location.state?.courseName;
-    const testName = location.state?.testName;
-    const text = location.state?.text;
-    const ngayketthuc = location.state?.ngayketthuc;
-    const ngaybatdau = location.state?.ngaybatdau;
-    const trangThai = location.state?.trangThai;
-    const tongDiem = location.state?.tongDiem;
+    const courseName = selectedClass?.tenLop || 'Không xác định';
+    const testName = selectedContent?.ten || 'Bài kiểm tra';
+    const text = selectedContent?.moTa || '';
+    const ngayketthuc = selectedContent?.thoiGianKetThuc;
+    const ngaybatdau = selectedContent?.thoiGianBatDau;
+    const trangThai = selectedContent?.status;
+    const tongDiem = selectedContent?.tongDiem;
 
-    const cauHoi = location.state?.cauHoi;
+    const cauHoi = undefined;
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -85,9 +86,7 @@ const TestExercise = () => {
 
             <div className='flex pt-16'>
                 <CourseSidebar
-                    sections={mockSections}
                     isOpen={sidebarOpen}
-                    courseName={courseName}
                     onClose={() => setSidebarOpen(false)}
                 />
 

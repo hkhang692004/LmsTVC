@@ -1,5 +1,6 @@
-import { CauHoi, LuaChon, BaiKiemTra, sequelize } from '../models/index.js';
+import { CauHoi, LuaChon, BaiKiemTra } from '../models/index.js';
 import { Op } from 'sequelize';
+import sequelize from '../config/db.js';
 import { DatabaseError } from '../utils/errors.js';
 
 class QuestionRepository {

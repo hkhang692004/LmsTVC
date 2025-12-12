@@ -36,12 +36,12 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path='/mycourse' element={<MyCoursePage />} />
           <Route path='/mycontent/:id' element={<MyContent />} />
-          <Route path='/forum' element={<Forum />} />
-          <Route path='/directory' element={<Directory />} />
-          <Route path='/forumcontent' element={<ForumContent />} />
+          <Route path='/forum/:id' element={<Forum />} />
+          <Route path='/directory/:id' element={<Directory />} />
+          <Route path='/forumcontent/:id' element={<ForumContent />} />
           <Route path='/text' element={<Text />} />
-          <Route path='/assignment' element={<UploadAssignment />} />
-          <Route path='/test' element={<TestExercise />} />
+          <Route path='/assignment/:id' element={<UploadAssignment />} />
+          <Route path='/test/:id' element={<TestExercise />} />
           <Route path='/kiemtra' element={<DoTest />} />
         </Route>
       </Routes>

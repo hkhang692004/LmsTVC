@@ -17,7 +17,6 @@ import BaiLamCauHoi from "./baiLamCauHoi.js";
 import LuaChonDaChon from "./luaChonDaChon.js";
 import Chat from "./chat.js";
 import ChatFile from "./chatFile.js";
-import LichHoatDong from "./lichHoatDong.js";
 import ThongBao from "./thongBao.js";
 
 // === LIÊN KẾT GIỮA CÁC MODEL ===
@@ -34,7 +33,6 @@ NguoiDung.hasMany(NoiDung, { foreignKey: 'idNguoiDung', as: 'noiDungs' });
 NguoiDung.hasMany(BaiLam, { foreignKey: 'idSinhVien', as: 'baiLams' });
 NguoiDung.hasMany(Chat, { foreignKey: 'idNguoiGui', as: 'tinNhanDaGui' });
 NguoiDung.hasMany(Chat, { foreignKey: 'idNguoiNhan', as: 'tinNhanDaNhan' });
-NguoiDung.hasMany(LichHoatDong, { foreignKey: 'idGiangVien', as: 'lichHoatDongs' });
 NguoiDung.hasMany(ThongBao, { foreignKey: 'idNguoiGui', as: 'thongBaoDaGui' });
 
 // NamHoc
@@ -63,7 +61,7 @@ Lop.belongsToMany(NguoiDung, {
 });
 Lop.hasMany(ChuDe, { foreignKey: 'idLop', as: 'chuDes' });
 Lop.hasMany(BaiKiemTra, { foreignKey: 'idLop', as: 'baiKiemTras' });
-Lop.hasMany(LichHoatDong, { foreignKey: 'idLop', as: 'lichHoatDongs' });
+
 Lop.hasMany(ThongBao, { foreignKey: 'idLop', as: 'thongBaos' });
 
 // Lop_SinhVien
@@ -130,10 +128,6 @@ Chat.hasMany(ChatFile, { foreignKey: 'idChat', as: 'files' });
 // ChatFile
 ChatFile.belongsTo(Chat, { foreignKey: 'idChat', as: 'chat' });
 
-// LichHoatDong
-LichHoatDong.belongsTo(NguoiDung, { foreignKey: 'idGiangVien', as: 'giangVien' });
-LichHoatDong.belongsTo(Lop, { foreignKey: 'idLop', as: 'lop' });
-
 // ThongBao
 ThongBao.belongsTo(NguoiDung, { foreignKey: 'idNguoiGui', as: 'nguoiGui' });
 ThongBao.belongsTo(Lop, { foreignKey: 'idLop', as: 'lop' });
@@ -157,6 +151,6 @@ export {
     LuaChonDaChon,
     Chat,
     ChatFile,
-    LichHoatDong,
+    
     ThongBao
 };

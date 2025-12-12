@@ -1,7 +1,6 @@
-import { BaiKiemTra, CauHoi, LuaChon, BaiLam, BaiLamCauHoi, LuaChonDaChon, Lop, NguoiDung, sequelize } from '../models/index.js';
+import { BaiKiemTra, CauHoi, LuaChon, BaiLam, BaiLamCauHoi, LuaChonDaChon, Lop, NguoiDung } from '../models/index.js';
 import { Op } from 'sequelize';
 import { DatabaseError } from '../utils/errors.js';
-import { idGenerator } from '../utils/idGenerator.js';
 
 class ExamRepository {
     async findWithFilters(filters) {
@@ -108,11 +107,7 @@ class ExamRepository {
 
     async create(examData) {
         try {
-            const id = idGenerator.generateId('BT');
-            const baiKiemTra = await BaiKiemTra.create({
-                id,
-                ...examData
-            });
+            const baiKiemTra = await BaiKiemTra.create(examData);
 
             return baiKiemTra ? this.mapToDTO(baiKiemTra) : null;
         } catch (error) {
@@ -296,12 +291,14 @@ class ExamRepository {
     mapToDTO(baiKiemTraRecord) {
         return {
             id: baiKiemTraRecord.id,
-            tieuDe: baiKiemTraRecord.tieuDe,
+            tenBaiKiemTra: baiKiemTraRecord.tieuDe,
             moTa: baiKiemTraRecord.moTa,
             thoiGianBatDau: baiKiemTraRecord.thoiGianBatDau,
             thoiGianKetThuc: baiKiemTraRecord.thoiGianKetThuc,
+            hanNop: baiKiemTraRecord.thoiGianKetThuc,
             thoiLuong: baiKiemTraRecord.thoiLuong,
             tongDiem: baiKiemTraRecord.tongDiem,
+            loaiKiemTra: baiKiemTraRecord.status,
             status: baiKiemTraRecord.status,
             choPhepXemDiem: baiKiemTraRecord.choPhepXemDiem,
             lop: baiKiemTraRecord.lop ? {

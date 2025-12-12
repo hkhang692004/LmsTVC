@@ -20,6 +20,13 @@ const fileFilter = (req, file, cb) => {
         // Text files
         'text/plain',
         'text/csv',
+        'text/xml',
+        'text/html',
+        'text/javascript',
+        'text/x-java-source',
+        
+        // Source code files (generic octet-stream for unknown code files)
+        'application/octet-stream',
         
         // Images
         'image/jpeg',
@@ -27,6 +34,7 @@ const fileFilter = (req, file, cb) => {
         'image/png',
         'image/gif',
         'image/webp',
+        'image/svg+xml',
         
         // Video/Audio
         'video/mp4',
@@ -34,15 +42,24 @@ const fileFilter = (req, file, cb) => {
         'video/quicktime',
         'audio/mpeg',
         'audio/wav',
+        'audio/mp3',
         
         // Archives
         'application/zip',
-        'application/x-rar-compressed'
+        'application/x-rar-compressed',
+        'application/x-7z-compressed',
+        'application/gzip',
+        
+        // Source code
+        'application/x-java-archive',
+        'application/json'
     ];
 
     if (allowedTypes.includes(file.mimetype)) {
+        console.log('[upload.fileFilter] File accepted:', file.originalname, '(' + file.mimetype + ')');
         cb(null, true);
     } else {
+        console.error('[upload.fileFilter] File rejected:', file.originalname, '(' + file.mimetype + ')');
         cb(new Error(`File type not allowed: ${file.mimetype}. Allowed types: ${allowedTypes.join(', ')}`), false);
     }
 };
@@ -58,8 +75,30 @@ const upload = multer({
 });
 
 // Export middleware functions
-export const uploadSingle = (fieldName) => upload.single(fieldName);
-export const uploadMultiple = (fieldName, maxCount = 10) => upload.array(fieldName, maxCount);
+export const uploadSingle = (fieldName) => (req, res, next) => {
+    console.log('[upload.uploadSingle] Middleware called, fieldName:', fieldName);
+    return upload.single(fieldName)(req, res, (err) => {
+        if (err) {
+            console.error('[upload.uploadSingle] Error:', err.message);
+        } else {
+            console.log('[upload.uploadSingle] File uploaded:', req.file?.originalname);
+        }
+        next(err);
+    });
+};
+
+export const uploadMultiple = (fieldName, maxCount = 10) => (req, res, next) => {
+    console.log('[upload.uploadMultiple] Middleware called, fieldName:', fieldName, 'maxCount:', maxCount);
+    return upload.array(fieldName, maxCount)(req, res, (err) => {
+        if (err) {
+            console.error('[upload.uploadMultiple] Error:', err.message);
+        } else {
+            console.log('[upload.uploadMultiple] Files uploaded count:', req.files?.length);
+        }
+        next(err);
+    });
+};
+
 export const uploadFields = (fields) => upload.fields(fields);
 export const uploadAny = upload.any();
 

@@ -1,5 +1,6 @@
-import { BaiLam, BaiLamCauHoi, LuaChonDaChon, BaiKiemTra, CauHoi, LuaChon, NguoiDung, sequelize } from '../models/index.js';
+import { BaiLam, BaiLamCauHoi, LuaChonDaChon, BaiKiemTra, CauHoi, LuaChon, NguoiDung } from '../models/index.js';
 import { Op } from 'sequelize';
+import sequelize from '../config/db.js';
 import { DatabaseError } from '../utils/errors.js';
 
 class SubmissionRepository {

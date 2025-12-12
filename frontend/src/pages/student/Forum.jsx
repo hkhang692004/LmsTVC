@@ -1,46 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
-import mockSections from '@/mocks/mockSections'
 import MyHeader from '@/components/myui/MyHeader'
 import MyFooter from '@/components/myui/MyFooter'
 import ScrollToTop from '@/components/myui/ScrollToTop'
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { MdOutlineChat } from "react-icons/md";
 import Breadcrumb from '@/components/myui/Breadcrump'
 import { FaSearch, FaUser } from "react-icons/fa";
 import { HiChevronDown } from "react-icons/hi";
-import mockForumPosts from '@/mocks/mockForum'
 import formatDateTime from '@/components/myui/FormatDateTime'
 import NewTopicForm from '@/components/myui/NewTopicForm';
+import useClassStore from '@/stores/useClassStore';
+import axiosClient from '@/lib/axios';
+import { toast } from 'sonner';
 
 const Forum = () => {
-  const location = useLocation();
-  const title = location.state?.title;
-  const courseName = location.state?.courseName;
-  const text = location.state?.text;
+  const { id: _forumId } = useParams();  // Get contentId from URL (for future API fetch)
   const navigate = useNavigate();
+  const selectedClass = useClassStore(state => state.selectedClass);
+  const selectedContent = useClassStore(state => state.selectedContent);
+ 
+  // Use store data if available (cache), fallback to empty values
+  const title = selectedContent?.tieuDe || selectedContent?.ten || 'Phúc đáp';
+  const courseName = selectedClass?.tenLop || 'Không xác định';
+  const text = selectedContent?.text || '';
+
+  // Sync store with URL on back button
+  useEffect(() => {
+   
+  }, [_forumId]);
 
   const handleClick = (post) => () => {
-    navigate("/ForumContent", {
-      state: {
-        title: title,
-        courseName: courseName,
-        post: post
-      }
-    });
+    navigate(`/ForumContent/${post.id}`);
   }
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState('');  // lưu input đang gõ
-  const [searchQuery, setSearchQuery] = useState('');  // lưu query thực hiện tìm kiếm
-  const [posts, setPosts] = useState(mockForumPosts);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showNewTopicForm, setShowNewTopicForm] = useState(false);
+  const [topicId, setTopicId] = useState(null); // Store topic ID from parent content
+
+  // Fetch forum posts và topic ID từ API khi component mount hoặc contentId thay đổi
+  useEffect(() => {
+    if (_forumId) {
+      const fetchPosts = async () => {
+        try {
+          setLoading(true);
+          
+          // Fetch parent content để lấy idChuDe
+          const contentResponse = await axiosClient.get(`/api/content/${_forumId}`);
+          const parentContent = contentResponse.data?.data;
+          if (parentContent?.idChuDe) {
+            setTopicId(parentContent.idChuDe);
+            console.log('Topic ID from parent content:', parentContent.idChuDe);
+          }
+          
+          // Fetch posts - use /posts endpoint for direct children only
+          const response = await axiosClient.get(`/api/content/${_forumId}/posts`);
+          const data = response.data?.data;
+          
+          // Handle response structure { post, replies }
+          if (data && data.replies) {
+            setPosts(data.replies || []);
+          } else if (Array.isArray(data)) {
+            // Fallback if still array format
+            setPosts(data);
+          } else {
+            setPosts([]);
+          }
+          setError(null);
+        } catch (err) {
+          console.error('Error fetching forum posts:', err);
+          setError('Không thể tải danh sách bài viết');
+          setPosts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchPosts();
+    }
+  }, [_forumId]);
 
   // Lọc bài viết dựa vào searchQuery (đã xác nhận)
-  const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.author.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPosts = posts.filter(post => {
+    const postTitle = post.tieuDe || post.title || '';
+    const postAuthor = post.nguoiTao?.ten || post.author || '';
+    return (
+      postTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      postAuthor.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   // Bắt sự kiện nhấn Enter trong input tìm kiếm
   const handleKeyDown = (e) => {
@@ -55,19 +107,43 @@ const Forum = () => {
     setSearchQuery(searchInput.trim());
   }
 
-  const handleNewTopicSubmit = ({ title, content }) => {
-    const newPost = {
-      id: posts.length + 1,
-      title,
-      author: "Bạn",
-      replies: 0,
-      date: new Date().toISOString(),
-      content,
-      isRead: false,
-      repliesList: []
-    };
-    setPosts([newPost, ...posts]);
-    setShowNewTopicForm(false);
+  const handleNewTopicSubmit = async ({ title, content, files = [] }) => {
+    try {
+      // Create FormData để gửi files + content
+      const formData = new FormData();
+      formData.append('tieuDe', title);
+      formData.append('noiDung', content);
+      formData.append('loaiNoiDung', 'phucDap');
+      formData.append('idNoiDungCha', _forumId);
+      formData.append('idChuDe', topicId);
+      
+      // Append files nếu có
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+      
+      // POST với FormData (axios sẽ set content-type tự động)
+      const response = await axiosClient.post(`/api/content`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (response.data?.data) {
+        setPosts([response.data.data, ...posts]);
+        setShowNewTopicForm(false);
+        
+        // Show success notification
+        if (files.length > 0) {
+          toast.success(`Bài thảo luận được đăng thành công với ${files.length} tập tin!`);
+        } else {
+          toast.success('Bài thảo luận đăng thành công!');
+        }
+      }
+    } catch (err) {
+      console.error('Error creating forum post:', err.response?.data || err.message);
+      toast.error('Không thể tạo bài viết. Vui lòng thử lại.');
+    }
   }
 
   return (
@@ -78,9 +154,7 @@ const Forum = () => {
 
       <div className='flex pt-16'>
         <CourseSidebar
-          sections={mockSections}
           isOpen={sidebarOpen}
-          courseName={courseName}
           onClose={() => setSidebarOpen(false)}
         />
 
@@ -97,8 +171,11 @@ const Forum = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 whitespace-pre-line">
-                  <p className="text-gray-600 text-lg">{text || "Không có nội dung."}</p>
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <div 
+                    className="text-gray-700 prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_a]:text-blue-600 [&_a]:hover:underline [&_code]:bg-gray-200 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded-md [&_blockquote]:border-l-4 [&_blockquote]:border-gray-400 [&_blockquote]:pl-4 [&_blockquote]:italic"
+                    dangerouslySetInnerHTML={{ __html: text || "Không có nội dung." }}
+                  />
                 </div>
 
                 {/* Thanh tìm kiếm và nút tạo chủ đề */}
@@ -153,7 +230,15 @@ const Forum = () => {
                   </div>
 
                   <div className="divide-y">
-                    {filteredPosts.length === 0 ? (
+                    {loading ? (
+                      <div className="px-6 py-12 text-center text-gray-500">
+                        Đang tải bài viết...
+                      </div>
+                    ) : error ? (
+                      <div className="px-6 py-12 text-center text-red-500">
+                        {error}
+                      </div>
+                    ) : filteredPosts.length === 0 ? (
                       <div className="px-6 py-12 text-center text-gray-500">
                         Không tìm thấy bài viết nào
                       </div>
@@ -161,14 +246,14 @@ const Forum = () => {
                       filteredPosts.map((post) => (
                         <div
                           key={post.id}
-                          className={`px-6 py-4 hover:bg-gray-50 transition-colors ${!post.isRead ? 'bg-blue-50' : ''}`}
+                          className="px-6 py-4 hover:bg-gray-50 transition-colors"
                         >
                           <div className="hidden lg:grid lg:grid-cols-12 gap-4">
                             <div className="col-span-5 flex items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 <a className='block w-fit' onClick={handleClick(post)}>
                                   <h3 className="font-semibold text-blue-600 hover:underline cursor-pointer">
-                                    {post.title}
+                                    {post.title || post.tieuDe}
                                   </h3>
                                 </a>
                               </div>
@@ -178,11 +263,11 @@ const Forum = () => {
                               <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
                                 <FaUser className="w-4 h-4 text-gray-600" />
                               </div>
-                              <span className="text-sm text-gray-700 truncate">{post.author}</span>
+                              <span className="text-sm text-gray-700 truncate">{post.author || post.nguoiTao?.ten || 'Ẩn danh'}</span>
                             </div>
 
                             <div className="col-span-2 flex items-center">
-                              <span className="text-gray-700">{post.replies}</span>
+                              <span className="text-gray-700">{post.replyCount || 0}</span>
                             </div>
 
                             <div className="col-span-3 flex items-center gap-2">
@@ -190,8 +275,8 @@ const Forum = () => {
                                 <FaUser className="w-4 h-4 text-gray-600" />
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="text-sm text-gray-700 truncate">{post.author}</span>
-                                <span className="text-xs text-gray-500">{formatDateTime(post.date)}</span>
+                                <span className="text-sm text-gray-700 truncate">{post.author || post.nguoiTao?.ten || 'Ẩn danh'}</span>
+                                <span className="text-xs text-gray-500">{formatDateTime(post.date || post.ngayTao)}</span>
                               </div>
                             </div>
                           </div>
@@ -199,16 +284,16 @@ const Forum = () => {
                           <div className="lg:hidden space-y-3">
                             <div className="flex items-start gap-3">
                               <h3 className="font-semibold text-blue-600 hover:underline cursor-pointer flex-1" onClick={handleClick(post)}>
-                                {post.title}
+                                {post.title || post.tieuDe}
                               </h3>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <FaUser className="w-4 h-4" />
-                              <span>{post.author}</span>
+                              <span>{post.author || post.nguoiTao?.ten || 'Ẩn danh'}</span>
                               <span>•</span>
-                              <span>{post.replies} phúc đáp</span>
+                              <span>{post.replyCount || 0} phúc đáp</span>
                             </div>
-                            <div className="text-xs text-gray-500">{formatDateTime(post.date)}</div>
+                            <div className="text-xs text-gray-500">{formatDateTime(post.date || post.ngayTao)}</div>
                           </div>
                         </div>
                       ))

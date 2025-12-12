@@ -1,5 +1,6 @@
 import db from "./config/db.js";
 import bcrypt from "bcrypt";
+const { sequelize, Sequelize } = db;
 import NguoiDung from "./models/nguoiDung.js";
 import MonHoc from "./models/monHoc.js";
 import HocKy from "./models/hocKy.js";
@@ -10,6 +11,9 @@ import Lop_SinhVien from "./models/lopSinhVien.js";
 import ChuDe from "./models/chuDe.js";
 import NoiDung from "./models/noiDung.js";
 import NoiDungChiTiet from "./models/noiDungChiTiet.js";
+import BaiKiemTra from "./models/baiKiemTra.js";
+import CauHoi from "./models/cauHoi.js";
+import LuaChon from "./models/luaChon.js";
 import "./models/index.js"; // Initialize associations
 
 const seedDatabase = async () => {
@@ -18,13 +22,18 @@ const seedDatabase = async () => {
         
         const { sequelize } = db;
 
-        // Sync database
-        await sequelize.sync({ alter: true });
+        // Disable FK checks, drop and recreate tables, re-enable FK checks
+        await sequelize.query('SET FOREIGN_KEY_CHECKS=0');
+        await sequelize.sync({ force: true });
+        await sequelize.query('SET FOREIGN_KEY_CHECKS=1');
         console.log('✅ Database synced');
 
         // 0. Clear old data
         console.log('🗑️  Clearing old data...');
         await Lop_SinhVien.destroy({ where: {} });
+        await LuaChon.destroy({ where: {} });
+        await CauHoi.destroy({ where: {} });
+        await BaiKiemTra.destroy({ where: {} });
         await NoiDungChiTiet.destroy({ where: {} });
         await NoiDung.destroy({ where: {} });
         await ChuDe.destroy({ where: {} });
@@ -204,37 +213,109 @@ const seedDatabase = async () => {
         ]);
         console.log('✅ Lop seeded');
 
-        // 7. Link sinh viên vào lớp
+        // 7. Seed NguoiDung (Students)
+        console.log('📚 Seeding NguoiDung (Students)...');
+        await Promise.all([
+            NguoiDung.findOrCreate({
+                where: { email: 'student1@example.com' },
+                defaults: {
+                    id: 'SV25001',
+                    ten: 'Nguyễn Thanh Hải',
+                    email: 'student1@example.com',
+                    password: hashedPassword,
+                    role: 'sinhVien',
+                    status: true
+                }
+            }),
+            NguoiDung.findOrCreate({
+                where: { email: 'student2@example.com' },
+                defaults: {
+                    id: 'SV25002',
+                    ten: 'Trần Minh Tuấn',
+                    email: 'student2@example.com',
+                    password: hashedPassword,
+                    role: 'sinhVien',
+                    status: true
+                }
+            }),
+            NguoiDung.findOrCreate({
+                where: { email: 'student3@example.com' },
+                defaults: {
+                    id: 'SV25003',
+                    ten: 'Phạm Quốc Anh',
+                    email: 'student3@example.com',
+                    password: hashedPassword,
+                    role: 'sinhVien',
+                    status: true
+                }
+            }),
+            NguoiDung.findOrCreate({
+                where: { email: 'student4@example.com' },
+                defaults: {
+                    id: 'SV25004',
+                    ten: 'Hoàng Thị Bình',
+                    email: 'student4@example.com',
+                    password: hashedPassword,
+                    role: 'sinhVien',
+                    status: true
+                }
+            }),
+            NguoiDung.findOrCreate({
+                where: { email: 'student5@example.com' },
+                defaults: {
+                    id: 'SV25005',
+                    ten: 'Đỗ Văn Chiến',
+                    email: 'student5@example.com',
+                    password: hashedPassword,
+                    role: 'sinhVien',
+                    status: true
+                }
+            })
+        ]);
+        console.log('✅ NguoiDung (Students) seeded');
+
+        // 8. Link sinh viên vào lớp
         console.log('📚 Linking students to classes...');
-        const studentId = 'SV25003'; // ID của sinh viên hiện có của bạn
+        const studentIds = ['SV25001', 'SV25002', 'SV25003', 'SV25004', 'SV25005'];
         await Promise.all([
             Lop_SinhVien.findOrCreate({
-                where: { idLop: 'LP001', idSinhVien: studentId },
-                defaults: { idLop: 'LP001', idSinhVien: studentId }
+                where: { idLop: 'LP001', idSinhVien: 'SV25001' },
+                defaults: { idLop: 'LP001', idSinhVien: 'SV25001' }
             }),
             Lop_SinhVien.findOrCreate({
-                where: { idLop: 'LP002', idSinhVien: studentId },
-                defaults: { idLop: 'LP002', idSinhVien: studentId }
+                where: { idLop: 'LP001', idSinhVien: 'SV25002' },
+                defaults: { idLop: 'LP001', idSinhVien: 'SV25002' }
             }),
             Lop_SinhVien.findOrCreate({
-                where: { idLop: 'LP003', idSinhVien: studentId },
-                defaults: { idLop: 'LP003', idSinhVien: studentId }
+                where: { idLop: 'LP002', idSinhVien: 'SV25003' },
+                defaults: { idLop: 'LP002', idSinhVien: 'SV25003' }
             }),
             Lop_SinhVien.findOrCreate({
-                where: { idLop: 'LP004', idSinhVien: studentId },
-                defaults: { idLop: 'LP004', idSinhVien: studentId }
+                where: { idLop: 'LP002', idSinhVien: 'SV25004' },
+                defaults: { idLop: 'LP002', idSinhVien: 'SV25004' }
+            }),
+            Lop_SinhVien.findOrCreate({
+                where: { idLop: 'LP003', idSinhVien: 'SV25003' },
+                defaults: { idLop: 'LP003', idSinhVien: 'SV25003' }
+            }),
+            Lop_SinhVien.findOrCreate({
+                where: { idLop: 'LP003', idSinhVien: 'SV25005' },
+                defaults: { idLop: 'LP003', idSinhVien: 'SV25005' }
+            }),
+            Lop_SinhVien.findOrCreate({
+                where: { idLop: 'LP004', idSinhVien: 'SV25001' },
+                defaults: { idLop: 'LP004', idSinhVien: 'SV25001' }
             })
         ]);
         console.log('✅ Students linked to classes');
 
-        // 8. Seed ChuDe (Topics)
+        // 9. Seed ChuDe (Topics)
         console.log('📚 Seeding ChuDe...');
         const chuDeData = [
             { id: 'CD001', tenChuDe: 'Chung', idLop: 'LP001', moTa: 'Thông tin chung về lớp OOP' },
             { id: 'CD002', tenChuDe: 'Thông báo', idLop: 'LP001', moTa: 'Các thông báo quan trọng' },
             { id: 'CD003', tenChuDe: 'Bài giảng', idLop: 'LP001', moTa: 'Tài liệu bài giảng' },
             { id: 'CD004', tenChuDe: 'Bài tập', idLop: 'LP001', moTa: 'Danh sách bài tập cần làm' },
-            { id: 'CD005', tenChuDe: 'Thi kiểm tra', idLop: 'LP001', moTa: 'Bài kiểm tra và thi cử' },
             { id: 'CD006', tenChuDe: 'Giới thiệu', idLop: 'LP002', moTa: 'Giới thiệu môn Web Development' },
             { id: 'CD007', tenChuDe: 'Tài liệu học tập', idLop: 'LP002', moTa: 'Các tài liệu tham khảo' },
             { id: 'CD008', tenChuDe: 'Bài tập về nhà', idLop: 'LP002', moTa: 'Bài tập cần nộp' },
@@ -244,10 +325,10 @@ const seedDatabase = async () => {
         await ChuDe.bulkCreate(chuDeData, { ignoreDuplicates: true });
         console.log('✅ ChuDe seeded');
 
-        // 9. Seed NoiDung (Content)
+        // 10. Seed NoiDung (Content)
         console.log('📚 Seeding NoiDung...');
         const noiDungData = [
-            // LP001 - CD001 (Chung)
+            // LP001 - CD001 (Chung) - PDF
             {
                 id: 'ND001',
                 tieuDe: 'DANH SÁCH CẤM THI MÔN HỌC',
@@ -278,7 +359,7 @@ const seedDatabase = async () => {
                 status: 'an',
                 ngayTao: new Date('2025-12-01')
             },
-            // LP001 - CD002 (Thông báo)
+            // LP001 - CD002 (Thông báo) - Text
             {
                 id: 'ND004',
                 tieuDe: 'Lịch học Lý Thuyết dự kiến môn OOP',
@@ -312,9 +393,31 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 status: 'an',
                 ngayTao: new Date('2025-12-05')
             },
-            // LP001 - CD003 (Bài giảng)
+            // LP001 - CD002 (Thông báo) - Folder
             {
                 id: 'ND006',
+                tieuDe: 'Điểm danh buổi trực tuyến',
+                noiDung: 'Thư mục chứa danh sách điểm danh',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD002',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-12-05')
+            },
+            // LP001 - CD002 (Thông báo) - Link
+            {
+                id: 'ND007',
+                tieuDe: 'Đường dẫn tải VS Code',
+                noiDung: 'Link tải Visual Studio Code',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD002',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-12-05')
+            },
+            // LP001 - CD003 (Bài giảng) - PDF
+            {
+                id: 'ND008',
                 tieuDe: 'Slide bài 1 - Giới thiệu OOP',
                 noiDung: 'Slide bài giảng về khái niệm OOP cơ bản',
                 loaiNoiDung: 'taiLieu',
@@ -323,8 +426,9 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 status: 'an',
                 ngayTao: new Date('2025-11-20')
             },
+            // LP001 - CD003 (Bài giảng) - Word
             {
-                id: 'ND007',
+                id: 'ND009',
                 tieuDe: 'Tài liệu Word - Hướng dẫn OOP',
                 noiDung: 'Tài liệu chi tiết về hướng đối tượng trong Java',
                 loaiNoiDung: 'taiLieu',
@@ -333,9 +437,55 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 status: 'an',
                 ngayTao: new Date('2025-11-20')
             },
-            // LP001 - CD004 (Bài tập)
+            // LP001 - CD003 (Bài giảng) - Video
             {
-                id: 'ND008',
+                id: 'ND010',
+                tieuDe: 'Video bài giảng - Class vs Object',
+                noiDung: 'Video hướng dẫn chi tiết về class và object',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD003',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-11-20')
+            },
+            // LP001 - CD003 (Bài giảng) - YouTube
+            {
+                id: 'ND011',
+                tieuDe: 'Video YouTube - Lập trình OOP cơ bản',
+                noiDung: 'Video hướng dẫn về lập trình hướng đối tượng',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD003',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-11-25')
+            },
+            // LP001 - CD002 (Thông báo) - Phúc đáp con (reply)
+            {
+                id: 'ND012',
+                tieuDe: 'Trả lời: Lịch học Lý Thuyết dự kiến',
+                noiDung: `Cảm ơn các em đã lưu ý. \nCác em vui lòng chuẩn bị kiến thức từ chương 1 đến chương 3 trước khi đến thi.`,
+                loaiNoiDung: 'phucDap',
+                idChuDe: 'CD002',
+                idNoiDungCha: 'ND004',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-12-06')
+            },
+            // LP001 - CD002 (Thông báo) - Phúc đáp con (reply 2)
+            {
+                id: 'ND013',
+                tieuDe: 'Trả lời: Điều chỉnh lịch học',
+                noiDung: 'Đã cập nhật lịch học mới. Các em hãy chuẩn bị sẵn sàng.',
+                loaiNoiDung: 'phucDap',
+                idChuDe: 'CD002',
+                idNoiDungCha: 'ND005',
+                idNguoiDung: 'GV001',
+                status: 'an',
+                ngayTao: new Date('2025-12-06')
+            },
+            // LP001 - CD004 (Bài tập) - Nộp bài
+            {
+                id: 'ND014',
                 tieuDe: 'Bài tập 1 - Lớp và Đối tượng',
                 noiDung: 'Viết một chương trình quản lý sinh viên sử dụng lớp và đối tượng',
                 loaiNoiDung: 'baiTap',
@@ -346,7 +496,7 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 ngayTao: new Date('2025-12-10')
             },
             {
-                id: 'ND009',
+                id: 'ND016',
                 tieuDe: 'Bài tập 2 - Kế thừa',
                 noiDung: 'Tạo hệ thống phân cấp lớp với kế thừa',
                 loaiNoiDung: 'baiTap',
@@ -357,7 +507,7 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 ngayTao: new Date('2025-12-15')
             },
             {
-                id: 'ND010',
+                id: 'ND015',
                 tieuDe: 'Bài tập 3 - Đa hình',
                 noiDung: 'Áp dụng đa hình trong một ứng dụng thực tế',
                 loaiNoiDung: 'baiTap',
@@ -366,182 +516,57 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 hanNop: new Date('2026-01-08'),
                 status: 'an',
                 ngayTao: new Date('2025-12-22')
-            },
-            // LP001 - CD005 (Thi kiểm tra)
-            {
-                id: 'ND011',
-                tieuDe: 'Bài kiểm tra giữa kỳ',
-                noiDung: 'Kiểm tra giữa kỳ môn OOP',
-                loaiNoiDung: 'baiNop',
-                idChuDe: 'CD005',
-                idNguoiDung: 'GV001',
-                hanNop: new Date('2025-12-26'),
-                status: 'an',
-                ngayTao: new Date('2025-12-10')
-            },
-            {
-                id: 'ND012',
-                tieuDe: 'Bài kiểm tra cuối kỳ',
-                noiDung: 'Kiểm tra cuối kỳ môn OOP',
-                loaiNoiDung: 'baiNop',
-                idChuDe: 'CD005',
-                idNguoiDung: 'GV001',
-                hanNop: new Date('2026-01-15'),
-                status: 'an',
-                ngayTao: new Date('2026-01-01')
-            },
-            // LP002 - CD006 (Giới thiệu)
-            {
-                id: 'ND013',
-                tieuDe: 'Chào mừng đến lớp Web Development',
-                noiDung: `Chào cả lớp!
-
-Đây là lớp Web Development. Chúng ta sẽ học về:
-- HTML5, CSS3
-- JavaScript
-- React.js
-- Node.js
-- Database (MongoDB, MySQL)
-
-Lịch học: Thứ 2, 3, 4 từ 18h00 - 20h00
-Phòng học: D1-205`,
-                loaiNoiDung: 'phucDap',
-                idChuDe: 'CD006',
-                idNguoiDung: 'GV002',
-                status: 'an',
-                ngayTao: new Date('2025-11-01')
-            },
-            // LP002 - CD007 (Tài liệu)
-            {
-                id: 'ND014',
-                tieuDe: 'HTML5 Tutorial PDF',
-                noiDung: 'Tài liệu hướng dẫn HTML5 chi tiết',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD007',
-                idNguoiDung: 'GV002',
-                status: 'an',
-                ngayTao: new Date('2025-11-05')
-            },
-            {
-                id: 'ND015',
-                tieuDe: 'CSS3 Guide Document',
-                noiDung: 'Hướng dẫn CSS3 cho web design',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD007',
-                idNguoiDung: 'GV002',
-                status: 'an',
-                ngayTao: new Date('2025-11-05')
-            },
-            {
-                id: 'ND016',
-                tieuDe: 'JavaScript Cheat Sheet',
-                noiDung: 'Bảng công thức nhanh JavaScript',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD007',
-                idNguoiDung: 'GV002',
-                status: 'an',
-                ngayTao: new Date('2025-11-10')
-            },
-            // LP002 - CD008 (Bài tập về nhà)
-            {
-                id: 'ND017',
-                tieuDe: 'Bài tập: Tạo trang web cá nhân',
-                noiDung: 'Tạo một trang web giới thiệu bản thân sử dụng HTML5 và CSS3',
-                loaiNoiDung: 'baiTap',
-                idChuDe: 'CD008',
-                idNguoiDung: 'GV002',
-                hanNop: new Date('2025-12-20'),
-                status: 'an',
-                ngayTao: new Date('2025-12-10')
-            },
-            {
-                id: 'ND018',
-                tieuDe: 'Bài tập: Responsive Design',
-                noiDung: 'Thiết kế trang web responsive với CSS3 Media Queries',
-                loaiNoiDung: 'baiTap',
-                idChuDe: 'CD008',
-                idNguoiDung: 'GV002',
-                hanNop: new Date('2025-12-27'),
-                status: 'an',
-                ngayTao: new Date('2025-12-17')
-            },
-            // LP003 - CD009 (Chương 1)
-            {
-                id: 'ND019',
-                tieuDe: 'Giới thiệu Database',
-                noiDung: `Chương 1: Database Basics
-
-Nội dung chính:
-1. Khái niệm về Database
-2. Database vs File System
-3. Các loại Database (SQL, NoSQL)
-4. RDBMS Architecture
-5. Data Model
-
-Yêu cầu: Hiểu rõ khái niệm cơ bản`,
-                loaiNoiDung: 'phucDap',
-                idChuDe: 'CD009',
-                idNguoiDung: 'GV003',
-                status: 'an',
-                ngayTao: new Date('2025-11-15')
-            },
-            {
-                id: 'ND020',
-                tieuDe: 'Slide Chương 1',
-                noiDung: 'Slide bài giảng chương 1 về cơ sở dữ liệu',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD009',
-                idNguoiDung: 'GV003',
-                status: 'an',
-                ngayTao: new Date('2025-11-15')
-            },
-            // LP003 - CD010 (Chương 2)
-            {
-                id: 'ND021',
-                tieuDe: 'SQL Basics & Query',
-                noiDung: `Chương 2: SQL Fundamentals
-
-1. SQL Query Language
-2. SELECT Statement
-3. WHERE Clause
-4. JOIN Operations
-5. Aggregate Functions
-
-Bài tập thực hành được cung cấp trong tài liệu`,
-                loaiNoiDung: 'phucDap',
-                idChuDe: 'CD010',
-                idNguoiDung: 'GV003',
-                status: 'an',
-                ngayTao: new Date('2025-11-20')
-            },
-            {
-                id: 'ND022',
-                tieuDe: 'SQL Query Examples',
-                noiDung: 'Các ví dụ query SQL thực tế',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD010',
-                idNguoiDung: 'GV003',
-                status: 'an',
-                ngayTao: new Date('2025-11-20')
-            },
-            {
-                id: 'ND023',
-                tieuDe: 'Slide Chương 2',
-                noiDung: 'Slide bài giảng chương 2 về SQL',
-                loaiNoiDung: 'taiLieu',
-                idChuDe: 'CD010',
-                idNguoiDung: 'GV003',
-                status: 'an',
-                ngayTao: new Date('2025-11-25')
-            },
+            }
         ];
         await NoiDung.bulkCreate(noiDungData, { ignoreDuplicates: true });
         console.log('✅ NoiDung seeded');
 
-        // 10. Seed NoiDungChiTiet (Content Details)
+        // 11.1 Seed Folder with Files
+        console.log('📚 Seeding Folder and Files...');
+        const folderFilesData = [
+            // Parent folder (loaiNoiDung='taiLieu' với loaiChiTiet='thuMuc')
+            {
+                id: 'ND016',
+                tieuDe: 'Thư mục Java OOP',
+                noiDung: 'Thư mục chứa các file Java về OOP',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD004',
+                idNguoiDung: 'GV001',
+                status: 'hien',
+                ngayTao: new Date('2025-12-01')
+            },
+            // Child Java file 1
+            {
+                id: 'ND017',
+                tieuDe: 'Main.java',
+                noiDung: 'File Java chính của bài giảng',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD004',
+                idNguoiDung: 'GV001',
+                idNoiDungCha: 'ND006',
+                status: 'hien',
+                ngayTao: new Date('2025-12-01')
+            },
+            // Child Java file 2
+            {
+                id: 'ND018',
+                tieuDe: 'Student.java',
+                noiDung: 'File Java class Student',
+                loaiNoiDung: 'taiLieu',
+                idChuDe: 'CD004',
+                idNguoiDung: 'GV001',
+                idNoiDungCha: 'ND006',
+                status: 'hien',
+                ngayTao: new Date('2025-12-01')
+            }
+        ];
+        await NoiDung.bulkCreate(folderFilesData, { ignoreDuplicates: true });
+        console.log('✅ Folder and Files seeded');
+
+        // 11. Seed NoiDungChiTiet (Content Details) - sử dụng URLs thực từ Cloudinary
         console.log('📚 Seeding NoiDungChiTiet...');
         const noiDungChiTietData = [
-            // Cho ND001
+            // ND001 - PDF: Danh sách cấm thi
             {
                 id: 'NDCT001',
                 idNoiDung: 'ND001',
@@ -552,7 +577,7 @@ Bài tập thực hành được cung cấp trong tài liệu`,
                 fileSize: 2048576,
                 ngayTao: new Date('2025-12-01')
             },
-            // Cho ND002
+            // ND002 - PDF: Thông tin điểm danh
             {
                 id: 'NDCT002',
                 idNoiDung: 'ND002',
@@ -563,7 +588,7 @@ Bài tập thực hành được cung cấp trong tài liệu`,
                 fileSize: 1024576,
                 ngayTao: new Date('2025-12-01')
             },
-            // Cho ND003
+            // ND003 - PDF: Lịch học
             {
                 id: 'NDCT003',
                 idNoiDung: 'ND003',
@@ -574,10 +599,10 @@ Bài tập thực hành được cung cấp trong tài liệu`,
                 fileSize: 512576,
                 ngayTao: new Date('2025-12-01')
             },
-            // Cho ND006
+            // ND008 - PDF: Slide bài 1 OOP
             {
                 id: 'NDCT004',
-                idNoiDung: 'ND006',
+                idNoiDung: 'ND008',
                 loaiChiTiet: 'file',
                 filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf',
                 fileName: 'slide-bai-1-oop.pdf',
@@ -585,91 +610,283 @@ Bài tập thực hành được cung cấp trong tài liệu`,
                 fileSize: 3048576,
                 ngayTao: new Date('2025-11-20')
             },
-            // Cho ND007
+            // ND009 - Word: Hướng dẫn OOP
             {
                 id: 'NDCT005',
-                idNoiDung: 'ND007',
+                idNoiDung: 'ND009',
                 loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1745441086/attachments/huong-dan-oop.docx',
+                filePath: 'https://res.cloudinary.com/dblzpkokm/raw/upload/v1764058654/ThucHanh9-GiamSatHeThong_usxryd.docx',
                 fileName: 'huong-dan-oop.docx',
                 fileType: 'docx',
                 fileSize: 4096576,
                 ngayTao: new Date('2025-11-20')
             },
-            // Cho ND014
+            // ND010 - Video: Bài giảng video Cloudinary
             {
                 id: 'NDCT006',
-                idNoiDung: 'ND014',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf',
-                fileName: 'html5-tutorial.pdf',
-                fileType: 'pdf',
-                fileSize: 5120576,
-                ngayTao: new Date('2025-11-05')
-            },
-            // Cho ND015
-            {
-                id: 'NDCT007',
-                idNoiDung: 'ND015',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1745441086/attachments/css3-guide.docx',
-                fileName: 'css3-guide.docx',
-                fileType: 'docx',
-                fileSize: 2560576,
-                ngayTao: new Date('2025-11-05')
-            },
-            // Cho ND016
-            {
-                id: 'NDCT008',
-                idNoiDung: 'ND016',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf',
-                fileName: 'js-cheatsheet.pdf',
-                fileType: 'pdf',
-                fileSize: 1536576,
-                ngayTao: new Date('2025-11-10')
-            },
-            // Cho ND020
-            {
-                id: 'NDCT009',
-                idNoiDung: 'ND020',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf',
-                fileName: 'slide-chuong-1-database.pdf',
-                fileType: 'pdf',
-                fileSize: 3584576,
-                ngayTao: new Date('2025-11-15')
-            },
-            // Cho ND022
-            {
-                id: 'NDCT010',
-                idNoiDung: 'ND022',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1745441086/attachments/sql-examples.docx',
-                fileName: 'sql-examples.docx',
-                fileType: 'docx',
-                fileSize: 2048576,
+                idNoiDung: 'ND010',
+                loaiChiTiet: 'video',
+                filePath: 'https://res.cloudinary.com/dblzpkokm/video/upload/v1765433522/SNAPSHOT_cvzkcg.mp4',
+                fileName: 'video-class-vs-object.mp4',
+                fileType: 'video',
+                fileSize: 125000000,
                 ngayTao: new Date('2025-11-20')
             },
-            // Cho ND023
+            // ND007 - Link: Đường dẫn tải VS Code
             {
-                id: 'NDCT011',
-                idNoiDung: 'ND023',
-                loaiChiTiet: 'file',
-                filePath: 'https://res.cloudinary.com/dblzpkokm/image/upload/v1764059709/03-Lop-va-doi-tuong_a4lskm.pdf',
-                fileName: 'slide-chuong-2-sql.pdf',
-                fileType: 'pdf',
-                fileSize: 4608576,
+                id: 'NDCT007',
+                idNoiDung: 'ND007',
+                loaiChiTiet: 'duongDan',
+                filePath: 'https://code.visualstudio.com/download',
+                fileName: 'VS Code Download',
+                fileType: 'link',
+                ngayTao: new Date('2025-12-05')
+            },
+            // ND011 - YouTube: Video hướng dẫn OOP từ YouTube
+            {
+                id: 'NDCT008',
+                idNoiDung: 'ND011',
+                loaiChiTiet: 'video',
+                filePath: 'https://www.youtube.com/watch?v=xo4rkcC7kFc',
+                fileName: 'OOP-Basics-YouTube',
+                fileType: 'youtube',
                 ngayTao: new Date('2025-11-25')
             },
+            // ND006 - Folder: Điểm danh buổi trực tuyến
+            {
+                id: 'NDCT009',
+                idNoiDung: 'ND006',
+                loaiChiTiet: 'thuMuc',
+                filePath: '/folders/attendance',
+                fileName: 'Điểm danh',
+                fileType: 'folder',
+                ngayTao: new Date('2025-12-05')
+            },
+           
+            // ND017 - Java file: Main.java
+            {
+                id: 'NDCT010',
+                idNoiDung: 'ND017',
+                loaiChiTiet: 'file',
+                filePath: 'https://res.cloudinary.com/dblzpkokm/raw/upload/v1765552267/lms-uploads/cv6dni048hi7ch2e9zum',
+                fileName: 'Main.java',
+                fileType: 'java',
+                fileSize: 1548,
+                ngayTao: new Date('2025-12-01')
+            },
+            // ND018 - Java file: Student.java
+            {
+                id: 'NDCT011',
+                idNoiDung: 'ND018',
+                loaiChiTiet: 'file',
+                filePath: 'https://res.cloudinary.com/dblzpkokm/raw/upload/v1765552192/lms-uploads/jnn59bxpykwc1x1gibkg',
+                fileName: 'Student.java',
+                fileType: 'java',
+                fileSize: 2048,
+                ngayTao: new Date('2025-12-01')
+            }
         ];
         await NoiDungChiTiet.bulkCreate(noiDungChiTietData, { ignoreDuplicates: true });
         console.log('✅ NoiDungChiTiet seeded');
+
+        // 12. Seed BaiKiemTra (Exams)
+        console.log('📚 Seeding BaiKiemTra...');
+        await BaiKiemTra.findOrCreate({
+            where: { id: 'BKT001' },
+            defaults: {
+                id: 'BKT001',
+                tieuDe: 'Kiểm tra giữa kỳ - OOP',
+                moTa: 'Bài kiểm tra giữa kỳ môn Toán Cao Cấp (OOP)',
+                idLop: 'LP001',
+                thoiGianBatDau: new Date('2025-12-10'),
+                thoiGianKetThuc: new Date('2026-02-15'),
+                thoiLuong: 60,
+                tongDiem: 10,
+                status: 'dangMo',
+                choPhepXemDiem: false
+            }
+        });
+        await BaiKiemTra.findOrCreate({
+            where: { id: 'BKT002' },
+            defaults: {
+                id: 'BKT002',
+                tieuDe: 'Kiểm tra cuối kỳ - OOP',
+                moTa: 'Bài kiểm tra cuối kỳ môn Toán Cao Cấp (OOP)',
+                idLop: 'LP001',
+                thoiGianBatDau: new Date('2025-12-15'),
+                thoiGianKetThuc: new Date('2026-03-15'),
+                thoiLuong: 90,
+                tongDiem: 10,
+                status: 'dangMo',
+                choPhepXemDiem: false
+            }
+        });
+        console.log('✅ BaiKiemTra seeded');
+
+        // 13. Seed CauHoi (Questions)
+        console.log('📚 Seeding CauHoi...');
+        const cauHoiData = [
+            // BKT001 - Kiểm tra giữa kỳ
+            {
+                id: 'CH001',
+                noiDung: 'Lớp (Class) trong OOP là gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT001',
+                diemCauHoi: 2,
+                ngayTao: new Date('2025-12-10')
+            },
+            {
+                id: 'CH002',
+                noiDung: 'Đối tượng (Object) được tạo từ đâu?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT001',
+                diemCauHoi: 2,
+                ngayTao: new Date('2025-12-10')
+            },
+            {
+                id: 'CH003',
+                noiDung: 'Kế thừa (Inheritance) có ý nghĩa gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT001',
+                diemCauHoi: 2,
+                ngayTao: new Date('2025-12-10')
+            },
+            {
+                id: 'CH004',
+                noiDung: 'Đa hình (Polymorphism) là khái niệm nào?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT001',
+                diemCauHoi: 2,
+                ngayTao: new Date('2025-12-10')
+            },
+            {
+                id: 'CH005',
+                noiDung: 'Encapsulation có liên quan đến gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT001',
+                diemCauHoi: 2,
+                ngayTao: new Date('2025-12-10')
+            },
+            // BKT002 - Kiểm tra cuối kỳ
+            {
+                id: 'CH006',
+                noiDung: 'Constructor trong Java được gọi khi nào?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT002',
+                diemCauHoi: 2,
+                ngayTao: new Date('2026-01-01')
+            },
+            {
+                id: 'CH007',
+                noiDung: 'Phương thức static có tính chất gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT002',
+                diemCauHoi: 2,
+                ngayTao: new Date('2026-01-01')
+            },
+            {
+                id: 'CH008',
+                noiDung: 'Interface khác với Abstract Class như thế nào?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT002',
+                diemCauHoi: 2,
+                ngayTao: new Date('2026-01-01')
+            },
+            {
+                id: 'CH009',
+                noiDung: 'Từ khóa "this" dùng để làm gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT002',
+                diemCauHoi: 2,
+                ngayTao: new Date('2026-01-01')
+            },
+            {
+                id: 'CH010',
+                noiDung: 'Exception Handling dùng để xử lý cái gì?',
+                loaiCauHoi: 'tracNghiem',
+                idBaiKiemTra: 'BKT002',
+                diemCauHoi: 2,
+                ngayTao: new Date('2026-01-01')
+            }
+        ];
+        await CauHoi.bulkCreate(cauHoiData, { ignoreDuplicates: true });
+        console.log('✅ CauHoi seeded');
+
+        // 14. Seed LuaChon (Answer Choices)
+        console.log('📚 Seeding LuaChon...');
+        const luaChonData = [
+            // CH001 - Lớp là gì?
+            { id: 'LC001', noiDung: 'Mẫu thiết kế để tạo đối tượng', idCauHoi: 'CH001', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC002', noiDung: 'Một tập hợp dữ liệu', idCauHoi: 'CH001', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC003', noiDung: 'Một hàm trong chương trình', idCauHoi: 'CH001', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC004', noiDung: 'Một loại biến toàn cục', idCauHoi: 'CH001', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            
+            // CH002 - Đối tượng được tạo từ đâu?
+            { id: 'LC005', noiDung: 'Từ lớp (Class)', idCauHoi: 'CH002', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC006', noiDung: 'Từ hàm', idCauHoi: 'CH002', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC007', noiDung: 'Từ module', idCauHoi: 'CH002', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC008', noiDung: 'Từ file', idCauHoi: 'CH002', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            
+            // CH003 - Kế thừa là gì?
+            { id: 'LC009', noiDung: 'Sự thừa hưởng tính chất từ lớp cha', idCauHoi: 'CH003', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC010', noiDung: 'Sao chép một lớp', idCauHoi: 'CH003', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC011', noiDung: 'Xóa một lớp', idCauHoi: 'CH003', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC012', noiDung: 'Kết hợp nhiều lớp', idCauHoi: 'CH003', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            
+            // CH004 - Đa hình là gì?
+            { id: 'LC013', noiDung: 'Cùng tên nhưng hành vi khác nhau', idCauHoi: 'CH004', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC014', noiDung: 'Nhiều lớp con', idCauHoi: 'CH004', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC015', noiDung: 'Nhiều biến', idCauHoi: 'CH004', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC016', noiDung: 'Nhiều hàm', idCauHoi: 'CH004', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            
+            // CH005 - Encapsulation
+            { id: 'LC017', noiDung: 'Che giấu dữ liệu bên trong lớp', idCauHoi: 'CH005', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC018', noiDung: 'Kết hợp các lớp lại', idCauHoi: 'CH005', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC019', noiDung: 'Sắp xếp code đẹp hơn', idCauHoi: 'CH005', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC020', noiDung: 'Xóa các phương thức', idCauHoi: 'CH005', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            
+            // CH006 - Constructor
+            { id: 'LC021', noiDung: 'Khi tạo đối tượng mới', idCauHoi: 'CH006', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC022', noiDung: 'Khi xóa đối tượng', idCauHoi: 'CH006', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC023', noiDung: 'Khi chạy chương trình', idCauHoi: 'CH006', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC024', noiDung: 'Khi gọi phương thức', idCauHoi: 'CH006', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            
+            // CH007 - Phương thức static
+            { id: 'LC025', noiDung: 'Không cần khởi tạo đối tượng để gọi', idCauHoi: 'CH007', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC026', noiDung: 'Chỉ dùng được một lần', idCauHoi: 'CH007', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC027', noiDung: 'Không thể thay đổi', idCauHoi: 'CH007', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC028', noiDung: 'Phải là public', idCauHoi: 'CH007', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            
+            // CH008 - Interface vs Abstract Class
+            { id: 'LC029', noiDung: 'Interface không có implementation, Abstract Class có thể có', idCauHoi: 'CH008', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC030', noiDung: 'Giống hệt nhau', idCauHoi: 'CH008', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC031', noiDung: 'Interface có state, Abstract Class không', idCauHoi: 'CH008', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC032', noiDung: 'Abstract Class dùng cho số', idCauHoi: 'CH008', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            
+            // CH009 - Từ khóa this
+            { id: 'LC033', noiDung: 'Tham chiếu đến đối tượng hiện tại', idCauHoi: 'CH009', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC034', noiDung: 'Tham chiếu đến lớp cha', idCauHoi: 'CH009', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC035', noiDung: 'Tham chiếu đến biến toàn cục', idCauHoi: 'CH009', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC036', noiDung: 'Không dùng để tham chiếu gì cả', idCauHoi: 'CH009', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            
+            // CH010 - Exception Handling
+            { id: 'LC037', noiDung: 'Xử lý lỗi tại thời gian chạy', idCauHoi: 'CH010', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC038', noiDung: 'Xóa file', idCauHoi: 'CH010', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC039', noiDung: 'Tạo biến mới', idCauHoi: 'CH010', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC040', noiDung: 'Gọi hàm', idCauHoi: 'CH010', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') }
+        ];
+        await LuaChon.bulkCreate(luaChonData, { ignoreDuplicates: true });
+        console.log('✅ LuaChon seeded');
 
         console.log('🎉 All seeds completed successfully!');
         process.exit(0);
     } catch (error) {
         console.error('❌ Error seeding database:', error.message);
+        console.error('📋 Full error details:', error);
+        if (error.sql) {
+            console.error('📝 SQL Query:', error.sql);
+            console.error('🔍 SQL Parameters:', error.parameters);
+        }
         process.exit(1);
     }
 };

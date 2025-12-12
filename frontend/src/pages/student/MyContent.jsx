@@ -14,21 +14,27 @@ const MyContent = () => {
   const {id} = useParams();
   const [myClass,setMyClass] = useState([]);
   const setSelectedClass = useClassStore(state => state.setSelectedClass);
+  const setMyClassStore = useClassStore(state => state.setMyClass);
+  const setClassId = useClassStore(state => state.setClassId);
 
   useEffect(()=>{
     if (!id) return; // Skip if id is undefined
+    setClassId(id);  // Save classId for back navigation
     const fetchMyClass = async() =>{
         try {
           const response = await classService.getClassById(id);
           const classData = response.data?.data || [];
+          console.log("Class data received:", classData);
+          console.log("chuDes:", classData.chuDes);
           setMyClass(classData);
           setSelectedClass(classData);
+          setMyClassStore(classData); // Persist vào store
         } catch (error) {
           console.log("Lỗi khi fetch chi tiết lớp học",error);
         }
     };
     fetchMyClass();
-  },[id, setSelectedClass]);
+  },[id, setSelectedClass, setMyClassStore, setClassId]);
 
   
  
