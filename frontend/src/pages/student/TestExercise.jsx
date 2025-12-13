@@ -2,39 +2,72 @@ import Breadcrumb from '@/components/myui/Breadcrump';
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar';
 import MyHeader from '@/components/myui/MyHeader';
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaFilePen } from "react-icons/fa6";
 import ScrollToTop from '@/components/myui/ScrollToTop';
 import MyFooter from '@/components/myui/MyFooter';
 import formatDateTime from '@/components/myui/FormatDateTime';
 import useClassStore from '@/stores/useClassStore';
+import examService from '@/services/examService';
+import { toast } from 'sonner';
 
 const TestExercise = () => {
-    const { id: _testId } = useParams();  // Get testId from URL (for future API fetch)
+    const { id: testId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const selectedClass = useClassStore(state => state.selectedClass);
-    const selectedContent = useClassStore(state => state.selectedContent);
 
-    const courseName = selectedClass?.tenLop || 'Không xác định';
-    const testName = selectedContent?.ten || 'Bài kiểm tra';
-    const text = selectedContent?.moTa || '';
-    const ngayketthuc = selectedContent?.thoiGianKetThuc;
-    const ngaybatdau = selectedContent?.thoiGianBatDau;
-    const trangThai = selectedContent?.status;
-    const tongDiem = selectedContent?.tongDiem;
-
-    const cauHoi = undefined;
-
+    const [exam, setExam] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // --- COUNTDOWN GIỐNG UploadAssignment ---
+    // If coming from submit, replace current history entry to remove old test page
+    useEffect(() => {
+        if (location.state?.fromSubmit) {
+            // Replace current entry to clear the duplicate test page
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
+    // Fetch exam data with submission status
+    useEffect(() => {
+        const fetchExam = async () => {
+            try {
+                setLoading(true);
+                const response = await examService.getExamStudentView(testId);
+                console.log('Exam data:', response.data?.data);
+                setExam(response.data?.data);
+            } catch (error) {
+                console.error('Error fetching exam:', error);
+                toast.error('Không thể tải thông tin bài kiểm tra');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (testId) {
+            fetchExam();
+        }
+    }, [testId]);
+
+    const courseName = selectedClass?.tenLop || exam?.iop?.tenLop || exam?.lop?.tenLop || 'Không xác định';
+    const testName = exam?.tenBaiKiemTra || exam?.tieuDe || 'Bài kiểm tra';
+    const text = exam?.noiDung || exam?.moTa || '';
+    const thoiLuong = exam?.thoiLuong || 0;
+    const ngayketthuc = exam?.thoiGianKetThuc;
+    const ngaybatdau = exam?.thoiGianBatDau;
+    const mySubmission = exam?.mySubmission;
+    const trangThai = mySubmission?.trangThai || 'chuaLam';
+    const tongDiem = mySubmission?.tongDiem;
+    const choPhepXemDiem = exam?.choPhepXemDiem;
+
     const [timeLeft, setTimeLeft] = useState("");
 
     useEffect(() => {
-        if (!ngayketthuc) return;
+        if (!exam?.thoiGianKetThuc) return;
 
         const updateTimeLeft = () => {
-            const deadline = new Date(ngayketthuc).getTime();
+            const deadline = new Date(exam.thoiGianKetThuc).getTime();
             const now = Date.now();
             const diff = deadline - now;
 
@@ -66,17 +99,28 @@ const TestExercise = () => {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [ngayketthuc]);
+    }, [exam?.thoiGianKetThuc]);
 
 
 
 
-    // --- KIỂM TRA THỜI GIAN HIỆN TẠI CÓ ĐƯỢC LÀM BÀI KHÔNG ---
+    // Kiểm tra thời gian hiện tại có được làm bài không
     const now = new Date().getTime();
-    const start = new Date(ngaybatdau).getTime();
-    const end = new Date(ngayketthuc).getTime();
+    const start = exam?.thoiGianBatDau ? new Date(exam.thoiGianBatDau).getTime() : null;
+    const end = exam?.thoiGianKetThuc ? new Date(exam.thoiGianKetThuc).getTime() : null;
 
-    const duocLamBai = now >= start && now <= end;
+    const duocLamBai = start && end && now >= start && now <= end && trangThai !== 'daNop';
+
+    if (loading) {
+        return (
+            <>
+                <MyHeader />
+                <div className="min-h-screen flex items-center justify-center pt-20">
+                    <p className="text-gray-500">Đang tải...</p>
+                </div>
+            </>
+        );
+    }
 
 
     return (
@@ -121,16 +165,16 @@ const TestExercise = () => {
                             {duocLamBai && (
                                 <button
                                     className="px-6 py-3 bg-orange-500 hover:bg-blue-500 text-white rounded-lg shadow font-semibold w-fit"
-                                    onClick={() => navigate("/kiemtra", {
-                                        state: {
-
-                                            testName,
-                                            cauHoi
-                                        }
-                                    })}
+                                    onClick={() => navigate(`/kiemtra/${testId}`)}
                                 >
-                                    Làm bài trắc nghiệm
+                                    {trangThai === 'dangLam' ? 'Tiếp tục bài làm' : 'Làm bài trắc nghiệm'}
                                 </button>
+                            )}
+
+                            {trangThai === 'daNop' && (
+                                <div className="text-green-600 font-semibold">
+                                    ✓ Bạn đã hoàn thành bài kiểm tra này
+                                </div>
                             )}
 
                             {/* BẢNG TRẠNG THÁI */}
@@ -146,11 +190,23 @@ const TestExercise = () => {
                                                 Trạng thái
                                             </td>
                                             <td className="px-4 py-2">
-                                                {trangThai === "da-nop" ? (
+                                                {trangThai === 'daNop' ? (
                                                     <span className="text-green-600 font-semibold">Đã hoàn thành</span>
+                                                ) : trangThai === 'dangLam' ? (
+                                                    <span className="text-blue-600 font-semibold">Đang làm</span>
                                                 ) : (
                                                     <span className="text-red-500 font-semibold">Chưa làm</span>
                                                 )}
+                                            </td>
+                                        </tr>
+
+                                        {/* Row Thời lượng */}
+                                        <tr className="border-b border-gray-300">
+                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                Thời lượng
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                {thoiLuong} phút
                                             </td>
                                         </tr>
 
@@ -160,7 +216,11 @@ const TestExercise = () => {
                                                 Thời gian còn lại
                                             </td>
                                             <td className="px-4 py-2">
-                                                {timeLeft}
+                                                {trangThai === 'daNop' ? (
+                                                    <span className="text-green-600 font-semibold">Hoàn thành</span>
+                                                ) : (
+                                                    timeLeft
+                                                )}
                                             </td>
                                         </tr>
 
@@ -170,7 +230,15 @@ const TestExercise = () => {
                                                 Điểm
                                             </td>
                                             <td className="px-4 py-2">
-                                                {tongDiem ? `${tongDiem}/10` : "Chưa có điểm"}
+                                                {trangThai === 'daNop' ? (
+                                                    choPhepXemDiem ? (
+                                                        tongDiem ? `${tongDiem}/10` : "Chưa có điểm"
+                                                    ) : (
+                                                        <span className="text-gray-600 font-semibold">Không có quyền xem điểm</span>
+                                                    )
+                                                ) : (
+                                                    "Chưa có điểm"
+                                                )}
                                             </td>
                                         </tr>
 

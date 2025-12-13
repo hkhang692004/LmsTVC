@@ -8,7 +8,7 @@ class UserRepository {
         try {
             const user = await NguoiDung.findOne({
                 where: { email: email },
-                attributes: ['id', 'email', 'ten', 'role', 'password', 'status']
+                attributes: ['id', 'email', 'ten', 'role', 'password', 'status', 'avatar']
             });
             return user;
         } catch (error) {
@@ -98,16 +98,28 @@ class UserRepository {
 
     async update(id, updateData) {
         try {
+            console.log('[UserRepository] update called for ID:', id);
+            console.log('[UserRepository] updateData:', updateData);
+            
             const [updatedRowsCount] = await NguoiDung.update(updateData, {
                 where: { id: id }
             });
+
+            console.log('[UserRepository] Rows updated:', updatedRowsCount);
 
             if (updatedRowsCount === 0) {
                 throw new DatabaseError('Không tìm thấy người dùng để cập nhật');
             }
 
             // Return updated user
-            return await this.findById(id);
+            const updatedUser = await this.findById(id);
+            console.log('[UserRepository] User after update:', {
+                id: updatedUser?.id,
+                email: updatedUser?.email,
+                avatar: updatedUser?.avatar
+            });
+            
+            return updatedUser;
         } catch (error) {
             console.error('Database error in update:', error);
             

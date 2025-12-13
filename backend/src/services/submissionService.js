@@ -21,15 +21,22 @@ class SubmissionService {
     }
 
     async startExam(examId, userId) {
+        console.log('[SubmissionService] startExam called with examId:', examId, 'userId:', userId);
+        
         if (!examId || !userId) {
+            console.log('[SubmissionService] Missing required parameters');
             throw new ValidationError('ID bài kiểm tra và người dùng là bắt buộc');
         }
 
         // TODO: Add validation for exam time window, student enrollment, etc.
         
         try {
-            return await SubmissionRepository.create(examId, userId);
+            console.log('[SubmissionService] Calling SubmissionRepository.create');
+            const result = await SubmissionRepository.create(examId, userId);
+            console.log('[SubmissionService] Repository.create successful');
+            return result;
         } catch (error) {
+            console.error('[SubmissionService] Error in startExam:', error);
             if (error.message.includes('đã có bài làm')) {
                 throw new ValidationError('Bạn đã có bài làm cho bài kiểm tra này');
             }

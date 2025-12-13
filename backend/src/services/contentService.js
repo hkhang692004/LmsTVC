@@ -217,6 +217,22 @@ class ContentService {
         }
     }
 
+    // Get my submissions for assignment
+    async getMySubmissions(assignmentId, userId) {
+        try {
+            console.log('[ContentService] getMySubmissions for assignment:', assignmentId, 'user:', userId);
+            
+            // Fetch submissions with loaiNoiDung = 'baiNop'
+            const submissions = await ContentRepository.findSubmissionsByAssignment(assignmentId, userId);
+            console.log('[ContentService] Submissions count:', submissions.length);
+            
+            return submissions;
+        } catch (error) {
+            console.error('[ContentService] getMySubmissions error:', error);
+            throw error;
+        }
+    }
+
     // Update content và files
     async updateContent(contentId, updateData, files = [], remainFiles = []) {
         try {

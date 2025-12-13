@@ -131,7 +131,9 @@ class UserService {
                 
                 // Upload new avatar
                 const uploadResults = await uploadFiles([avatarFile]);
-                updateData.avatar = uploadResults[0].url;
+                updateData.avatar = uploadResults[0].secure_url; // Fix: use secure_url instead of url
+                
+                console.log('[UserService] Avatar uploaded to Cloudinary:', uploadResults[0].secure_url);
                 
                 // Delete old avatar from Cloudinary if exists
                 if (oldAvatarUrl) {

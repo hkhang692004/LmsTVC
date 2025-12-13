@@ -41,6 +41,20 @@ class ContentController {
         ResponseUtil.success(res, files, 'Lấy danh sách file thành công');
     });
 
+    // GET /api/content/:id/submissions - Get my submissions for assignment
+    getMySubmissions = asyncHandler(async (req, res) => {
+        const { id: assignmentId } = req.params;
+        const userId = req.user?.id; // From auth middleware
+
+        if (!userId) {
+            return ResponseUtil.error(res, 'Bạn cần đăng nhập để xem bài nộp', 401);
+        }
+
+        const submissions = await ContentService.getMySubmissions(assignmentId, userId);
+
+        ResponseUtil.success(res, submissions, 'Lấy danh sách bài nộp thành công');
+    });
+
     // POST /api/content
     createContent = asyncHandler(async (req, res) => {
         console.log('[ContentController] createContent called');
@@ -88,8 +102,17 @@ class ContentController {
 
         // Extract new files if any
         const files = req.files || [];
+        
+        // Extract remainFiles (IDs of files to keep)
+        let remainFiles = [];
+        if (req.body.remainFiles) {
+            // remainFiles can be a single value or array
+            remainFiles = Array.isArray(req.body.remainFiles) 
+                ? req.body.remainFiles 
+                : [req.body.remainFiles];
+        }
 
-        const result = await ContentService.updateContent(id, updateData, files);
+        const result = await ContentService.updateContent(id, updateData, files, remainFiles);
 
         ResponseUtil.success(res, result, 'Cập nhật nội dung thành công');
     });

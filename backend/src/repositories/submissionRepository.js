@@ -1,7 +1,9 @@
 import { BaiLam, BaiLamCauHoi, LuaChonDaChon, BaiKiemTra, CauHoi, LuaChon, NguoiDung } from '../models/index.js';
 import { Op } from 'sequelize';
-import sequelize from '../config/db.js';
+import db from '../config/db.js';
 import { DatabaseError } from '../utils/errors.js';
+
+const { sequelize } = db;
 
 class SubmissionRepository {
     async findById(id) {
@@ -12,7 +14,7 @@ class SubmissionRepository {
                     {
                         model: BaiKiemTra,
                         as: 'baiKiemTra',
-                        attributes: ['id', 'tieuDe', 'thoiLuong', 'tongDiem', 'thoiGianBatDau', 'thoiGianKetThuc']
+                        attributes: ['id', 'tieuDe', 'thoiLuong', 'tongDiem', 'thoiGianBatDau', 'thoiGianKetThuc', 'choPhepXemDiem']
                     },
                     {
                         model: NguoiDung,
@@ -60,25 +62,47 @@ class SubmissionRepository {
         const transaction = await sequelize.transaction();
         
         try {
+            console.log('[SubmissionRepository] Starting create with examId:', examId, 'studentId:', studentId);
+            
             // Check if student already has submission for this exam
             const existingSubmission = await BaiLam.findOne({
                 where: { 
                     idBaiKiemTra: examId,
                     idSinhVien: studentId 
-                }
+                },
+                transaction
             });
 
             if (existingSubmission) {
-                await transaction.rollback();
-                throw new Error('Sinh viên đã có bài làm cho bài kiểm tra này');
+                console.log('[SubmissionRepository] Existing submission found:', existingSubmission.id);
+                console.log('[SubmissionRepository] Returning existing submission');
+                await transaction.commit();
+                // Return existing submission (resume exam)
+                return await this.findById(existingSubmission.id);
             }
+
+            // Generate unique ID for submission
+            const lastSubmission = await BaiLam.findOne({
+                order: [['id', 'DESC']],
+                attributes: ['id']
+            });
+            
+            let newId = 'BL001';
+            if (lastSubmission && lastSubmission.id) {
+                const lastNumber = parseInt(lastSubmission.id.replace('BL', ''));
+                const newNumber = String(lastNumber + 1).padStart(3, '0');
+                newId = `BL${newNumber}`;
+            }
+            console.log('[SubmissionRepository] Generated submission ID:', newId);
 
             // Create submission
             const submission = await BaiLam.create({
+                id: newId,
                 idSinhVien: studentId,
                 idBaiKiemTra: examId,
                 thoiGianBatDau: new Date()
             }, { transaction });
+            console.log('[SubmissionRepository] Submission created:', submission.id);
 
             // Get all questions for this exam
             const questions = await CauHoi.findAll({
@@ -86,20 +110,59 @@ class SubmissionRepository {
                 attributes: ['id'],
                 order: [['thuTu', 'ASC']]
             });
+            console.log('[SubmissionRepository] Found questions:', questions.length);
 
             // Create BaiLamCauHoi entries for all questions
-            const baiLamCauHoiData = questions.map(question => ({
+            // Generate IDs for each BaiLamCauHoi
+            const lastBaiLamCauHoi = await BaiLamCauHoi.findOne({
+                order: [['id', 'DESC']],
+                attributes: ['id']
+            });
+            
+            let startNumber = 1;
+            if (lastBaiLamCauHoi && lastBaiLamCauHoi.id) {
+                startNumber = parseInt(lastBaiLamCauHoi.id.replace('BLCH', '')) + 1;
+            }
+            console.log('[SubmissionRepository] Starting BLCH ID number:', startNumber);
+            
+            const baiLamCauHoiData = questions.map((question, index) => ({
+                id: `BLCH${String(startNumber + index).padStart(3, '0')}`,
                 idBaiLam: submission.id,
                 idCauHoi: question.id
             }));
 
             await BaiLamCauHoi.bulkCreate(baiLamCauHoiData, { transaction });
+            console.log('[SubmissionRepository] Created BaiLamCauHoi entries:', baiLamCauHoiData.length);
 
             await transaction.commit();
+            console.log('[SubmissionRepository] Transaction committed');
+            
             return await this.findById(submission.id);
         } catch (error) {
-            await transaction.rollback();
-            console.error('Database error in create:', error);
+            console.error('[SubmissionRepository] Database error in create:', error);
+            console.error('[SubmissionRepository] Error stack:', error.stack);
+            
+            // Rollback transaction if it exists and hasn't been finished
+            if (typeof transaction !== 'undefined' && !transaction.finished) {
+                await transaction.rollback();
+                console.log('[SubmissionRepository] Transaction rolled back');
+            }
+            
+            // If duplicate entry error (race condition), fetch existing submission
+            if (error.name === 'SequelizeUniqueConstraintError' || error.parent?.code === 'ER_DUP_ENTRY') {
+                console.log('[SubmissionRepository] Duplicate entry detected, fetching existing submission');
+                const existingSubmission = await BaiLam.findOne({
+                    where: { 
+                        idBaiKiemTra: examId,
+                        idSinhVien: studentId 
+                    }
+                });
+                if (existingSubmission) {
+                    console.log('[SubmissionRepository] Found existing submission:', existingSubmission.id);
+                    return await this.findById(existingSubmission.id);
+                }
+            }
+            
             throw new DatabaseError('Lỗi khi tạo bài làm mới');
         }
     }
@@ -304,6 +367,8 @@ class SubmissionRepository {
 
     async calculateTotalScore(submissionId, transaction = null) {
         try {
+            console.log('[SubmissionRepository] Calculating total score for:', submissionId);
+            
             const result = await BaiLamCauHoi.findAll({
                 where: { idBaiLam: submissionId },
                 attributes: [
@@ -313,7 +378,10 @@ class SubmissionRepository {
                 transaction
             });
 
-            return parseFloat(result[0]?.totalScore) || 0;
+            const totalScore = parseFloat(result[0]?.totalScore) || 0;
+            console.log('[SubmissionRepository] Total score calculated:', totalScore);
+            
+            return totalScore;
         } catch (error) {
             console.error('Error calculating total score:', error);
             return 0;
@@ -358,7 +426,8 @@ class SubmissionRepository {
                 thoiLuong: submissionRecord.baiKiemTra.thoiLuong,
                 tongDiem: submissionRecord.baiKiemTra.tongDiem,
                 thoiGianBatDau: submissionRecord.baiKiemTra.thoiGianBatDau,
-                thoiGianKetThuc: submissionRecord.baiKiemTra.thoiGianKetThuc
+                thoiGianKetThuc: submissionRecord.baiKiemTra.thoiGianKetThuc,
+                choPhepXemDiem: submissionRecord.baiKiemTra.choPhepXemDiem
             },
             student: {
                 id: submissionRecord.sinhVien.id,

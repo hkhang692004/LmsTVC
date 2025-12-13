@@ -13,8 +13,11 @@ let isRedirecting = false;
 axiosClient.interceptors.response.use(
   res => res,
   err => {
-    // ✅ TẬP TRUNG xử lý 401 ở đây
-    if (err.response?.status === 401 && !isRedirecting) {
+    // ✅ Chỉ xử lý 401 cho các request KHÔNG PHẢI login
+    // Nếu là login request thì để component tự xử lý
+    const isLoginRequest = err.config?.url?.includes('/login');
+    
+    if (err.response?.status === 401 && !isRedirecting && !isLoginRequest) {
       isRedirecting = true;
       toast.error("Phiên đăng nhập đã hết hạn");
       setTimeout(() => { 

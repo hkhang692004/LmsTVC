@@ -1,5 +1,10 @@
 function formatDateTime(dateString) {
+  if (!dateString) return 'Chưa có thông tin';
+  
   const date = new Date(dateString);
+  
+  // Kiểm tra nếu date không hợp lệ
+  if (isNaN(date.getTime())) return 'Ngày không hợp lệ';
 
   const options = {
     weekday: 'long',      // Thứ trong tuần

@@ -82,7 +82,7 @@ class ExamRepository {
                         as: 'baiLams',
                         where: { idSinhVien: userId },
                         required: false,
-                        attributes: ['id', 'thoiGianBatDau', 'thoiGianNop', 'tongDiem', 'trangThai']
+                        attributes: ['id', 'thoiGianBatDau', 'thoiGianNop', 'tongDiem']
                     }
                 ]
             });

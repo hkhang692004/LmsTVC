@@ -170,6 +170,16 @@ class UserController {
         const updateData = req.body;
         const avatarFile = req.file; // File từ multer middleware
         
+        console.log('[UserController] updateProfile called');
+        console.log('[UserController] User ID:', user.id);
+        console.log('[UserController] Request body:', updateData);
+        console.log('[UserController] Avatar file:', avatarFile ? {
+            fieldname: avatarFile.fieldname,
+            originalname: avatarFile.originalname,
+            mimetype: avatarFile.mimetype,
+            size: avatarFile.size
+        } : 'NO FILE');
+        
         // Chỉ cho phép user update một số fields
         const allowedFields = ['ten', 'email'];
         const filteredData = {};
@@ -180,6 +190,9 @@ class UserController {
         });
         
         const updatedUser = await UserService.updateUser(user.id, filteredData, avatarFile);
+        
+        console.log('[UserController] User updated successfully');
+        console.log('[UserController] New avatar URL:', updatedUser.avatar);
         
         // Cập nhật session với thông tin mới
         req.session.user = {

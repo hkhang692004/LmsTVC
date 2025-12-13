@@ -16,15 +16,22 @@ class SubmissionController {
     });
     
     startExam = asyncHandler(async (req, res) => {
+        console.log('[SubmissionController] startExam called');
+        console.log('[SubmissionController] req.body:', req.body);
+        console.log('[SubmissionController] req.user:', req.user);
+        
         const { examId } = req.body;
         const { user } = req;
         
         if (!user) {
+            console.log('[SubmissionController] No user found - authentication failed');
             throw new ValidationError('Cần đăng nhập để bắt đầu làm bài');
         }
         
+        console.log('[SubmissionController] Calling SubmissionService.startExam with examId:', examId, 'userId:', user.id);
         const result = await SubmissionService.startExam(examId, user.id);
         
+        console.log('[SubmissionController] startExam successful, returning result');
         ResponseUtil.created(res, result, 'Bắt đầu làm bài thành công');
     });
     
@@ -49,16 +56,29 @@ class SubmissionController {
     // === ANSWER MANAGEMENT ===
     
     answerQuestion = asyncHandler(async (req, res) => {
+        console.log('[SubmissionController] answerQuestion called');
+        console.log('[SubmissionController] req.params.id:', req.params.id);
+        console.log('[SubmissionController] req.body:', req.body);
+        console.log('[SubmissionController] req.user:', req.user);
+        
         const { id } = req.params;
-        const answersData = req.body;
         const { user } = req;
         
         if (!user) {
             throw new ValidationError('Cần đăng nhập để trả lời câu hỏi');
         }
         
-        // Convert single answer to array format if needed
-        const answersArray = Array.isArray(answersData) ? answersData : [answersData];
+        // Handle both formats: { answers: [...] } or direct array [...]
+        let answersArray;
+        if (req.body.answers && Array.isArray(req.body.answers)) {
+            answersArray = req.body.answers;
+        } else if (Array.isArray(req.body)) {
+            answersArray = req.body;
+        } else {
+            answersArray = [req.body];
+        }
+        
+        console.log('[SubmissionController] answersArray:', JSON.stringify(answersArray, null, 2));
         
         const userId = user.role === 'sinhVien' ? user.id : null;
         const result = await SubmissionService.syncAnswers(id, answersArray, userId);

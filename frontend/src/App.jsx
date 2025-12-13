@@ -13,6 +13,7 @@ import Text from './pages/student/Text'
 import UploadAssignment from './pages/student/UploadAssignment'
 import TestExercise from './pages/student/TestExercise'
 import DoTest from './pages/student/DoTest'
+import Profile from './pages/student/Profile'
 import StartPage from './pages/main/StartPage'
 
 function App() {
@@ -42,7 +43,8 @@ function App() {
           <Route path='/text' element={<Text />} />
           <Route path='/assignment/:id' element={<UploadAssignment />} />
           <Route path='/test/:id' element={<TestExercise />} />
-          <Route path='/kiemtra' element={<DoTest />} />
+          <Route path='/kiemtra/:id' element={<DoTest />} />
+          <Route path='/profile' element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

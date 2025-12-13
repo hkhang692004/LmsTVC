@@ -9,36 +9,76 @@ import { TbFileSettings } from "react-icons/tb";
 import formatDateTime from '@/components/myui/FormatDateTime';
 import { useParams } from 'react-router-dom';
 import useClassStore from '@/stores/useClassStore';
+import useUserStore from '@/stores/useUserStore';
+import contentService from '@/services/contentService';
+import { toast } from 'sonner';
 
 const UploadAssignment = () => {
-    const { id: _assignmentId } = useParams();  // Get assignmentId from URL (for future API fetch)
+    const { id: assignmentId } = useParams();
     const selectedClass = useClassStore(state => state.selectedClass);
-    const selectedContent = useClassStore(state => state.selectedContent);
+    const currentUser = useUserStore(state => state.user);
     
-    const courseName = selectedClass?.tenLop || 'Không xác định';
-    const assignmentName = selectedContent?.ten || 'Bài tập';
-    const text = selectedContent?.noiDung || '';
-    const hanNop = selectedContent?.hanNop;
-    const ngayDang = selectedContent?.ngayTao;
-    const trangThai = selectedContent?.status;
-
+    const [assignment, setAssignment] = useState(null);
+    const [submissions, setSubmissions] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
+    const [existingFiles, setExistingFiles] = useState([]); // Files đã nộp trước đó
     const [showFileInput, setShowFileInput] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     // COUNTDOWN
     const [timeLeft, setTimeLeft] = useState("");
+
+    // Fetch assignment data
     useEffect(() => {
-        if (!hanNop) return;
+        const fetchAssignment = async () => {
+            try {
+                setLoading(true);
+                const response = await contentService.getAssignment(assignmentId);
+                setAssignment(response.data?.data);
+            } catch (error) {
+                console.error('Error fetching assignment:', error);
+                toast.error('Không thể tải thông tin bài tập');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (assignmentId) {
+            fetchAssignment();
+        }
+    }, [assignmentId]);
+
+    // Fetch submissions
+    useEffect(() => {
+        const fetchSubmissions = async () => {
+            try {
+                const response = await contentService.getMySubmissions(assignmentId);
+                setSubmissions(response.data?.data || []);
+            } catch (error) {
+                console.error('Error fetching submissions:', error);
+                // Không hiển thị lỗi vì có thể chưa có bài nộp
+            }
+        };
+
+        if (assignmentId) {
+            fetchSubmissions();
+        }
+    }, [assignmentId]);
+    // Countdown effect
+    useEffect(() => {
+        if (!assignment?.hanNop) return;
 
         const updateTimeLeft = () => {
-            const deadline = new Date(hanNop).getTime();
+            const deadline = new Date(assignment.hanNop).getTime();
             const now = Date.now();
             const diff = deadline - now;
 
             if (diff <= 0) {
-                setTimeLeft("Đã hết hạn");
-                return false; // báo hiệu ngừng interval
+                setTimeLeft("Đã trễ hạn");
+                return false;
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -52,9 +92,7 @@ const UploadAssignment = () => {
             return true;
         };
 
-        // Gọi ngay 1 lần khi effect chạy để cập nhật ngay lập tức
         if (!updateTimeLeft()) {
-            // Nếu đã hết hạn ngay thì không tạo interval nữa
             return;
         }
 
@@ -65,7 +103,7 @@ const UploadAssignment = () => {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [hanNop]);
+    }, [assignment?.hanNop]);
 
 
     const handleSelectFile = (e) => {
@@ -77,15 +115,140 @@ const UploadAssignment = () => {
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleRemoveExistingFile = (index) => {
+        setExistingFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Hàm xử lý khi nhấn nút Chỉnh sửa
+    const handleEdit = () => {
+        if (isEditing && showFileInput) {
+            // Đang mở form edit, click lại để đóng
+            setShowFileInput(false);
+            setIsEditing(false);
+            setExistingFiles([]);
+            setAttachedFiles([]);
+        } else {
+            // Mở form edit
+            setIsEditing(true);
+            setShowFileInput(true);
+            // Load files cũ vào existingFiles để có thể xóa
+            if (submissions.length > 0 && submissions[0].chiTiets) {
+                setExistingFiles(submissions[0].chiTiets);
+            }
+            setAttachedFiles([]);
+        }
+    };
+
     // Hàm xử lý khi nhấn nút Lưu bài nộp
-    const handleSave = () => {
-        if (attachedFiles.length === 0) {
-            alert("Bạn chưa chọn file để nộp!");
+    const handleSave = async () => {
+        // Kiểm tra phải có ít nhất 1 file (mới hoặc cũ)
+        if (attachedFiles.length === 0 && existingFiles.length === 0) {
+            toast.error("Bạn cần có ít nhất 1 file để nộp!");
             return;
         }
-        // TODO: Thực hiện gửi attachedFiles lên server hoặc lưu dữ liệu
-        alert(`Đang lưu ${attachedFiles.length} file...`);
+
+        if (!currentUser) {
+            toast.error("Bạn cần đăng nhập để nộp bài!");
+            return;
+        }
+
+        try {
+            setUploading(true);
+
+            // Tạo FormData để gửi files + data
+            const formData = new FormData();
+            
+            // Thêm files
+            attachedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            // Thêm data của bài nộp
+            formData.append('tieuDe', `Bài nộp - ${assignment.tieuDe}`);
+            formData.append('noiDung', `Bài nộp của sinh viên ${currentUser.hoTen || currentUser.ten}`);
+            formData.append('loaiNoiDung', 'baiNop');
+            formData.append('idChuDe', assignment.idChuDe);
+            formData.append('idNguoiDung', currentUser.id);
+            formData.append('idNoiDungCha', assignmentId);
+            formData.append('status', 'daNop'); // Changed from 'hien' to 'daNop'
+
+            // Gọi API tạo hoặc cập nhật content với files
+            if (isEditing && submissions.length > 0) {
+                // Cập nhật bài nộp hiện tại
+                const submissionId = submissions[0].id;
+                
+                // Thêm remainFiles - danh sách ID của files giữ lại
+                const remainFileIds = existingFiles.map(f => f.id);
+                remainFileIds.forEach(id => {
+                    formData.append('remainFiles', id);
+                });
+                
+                await contentService.updateSubmission(submissionId, formData);
+                toast.success("Cập nhật bài nộp thành công!");
+            } else {
+                // Tạo bài nộp mới
+                await contentService.createSubmission(formData);
+                toast.success("Nộp bài thành công!");
+            }
+            
+            // Reset form
+            setAttachedFiles([]);
+            setExistingFiles([]);
+            setShowFileInput(false);
+            setIsEditing(false);
+            
+            // Refresh submissions list
+            const refreshResponse = await contentService.getMySubmissions(assignmentId);
+            setSubmissions(refreshResponse.data?.data || []);
+
+        } catch (error) {
+            console.error('Error submitting assignment:', error);
+            const errorMsg = error.response?.data?.message || 'Nộp bài thất bại!';
+            toast.error(errorMsg);
+        } finally {
+            setUploading(false);
+        }
     };
+
+    const courseName = selectedClass?.tenLop || 'Không xác định';
+    const assignmentName = assignment?.tieuDe || 'Bài tập';
+    const hasSubmitted = submissions.length > 0;
+
+    // Tính toán trạng thái nộp bài
+    const getSubmissionStatus = () => {
+        if (!hasSubmitted) return null;
+        
+        const latestSubmission = submissions[0]; // Latest submission (sorted by DESC)
+        const submissionTime = new Date(latestSubmission.ngayTao).getTime();
+        const deadlineTime = new Date(assignment.hanNop).getTime();
+        
+        const diffMs = submissionTime - deadlineTime;
+        const absDiffMs = Math.abs(diffMs);
+        const diffDays = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor((absDiffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        const timeText = `${diffDays > 0 ? `${diffDays} ngày ` : ''}${diffHours} giờ`;
+        
+        if (diffMs < 0) {
+            // Nộp sớm
+            return {
+                isLate: false,
+                message: `Sớm hơn ${timeText}`,
+                statusClass: 'bg-green-100 text-black',
+                timeClass: 'bg-green-100 text-black'
+            };
+        } else {
+            // Nộp trễ
+            return {
+                isLate: true,
+                message: `Trễ ${timeText}`,
+                statusClass: 'bg-red-100 text-black',
+                timeClass: 'bg-red-100 text-black'
+            };
+        }
+    };
+
+    const submissionStatus = hasSubmitted ? getSubmissionStatus() : null;
 
     return (
         <>
@@ -102,157 +265,253 @@ const UploadAssignment = () => {
                     <div className='w-full px-4 lg:px-10'>
                         <div className="flex flex-col my-10 lg:my-20 space-y-6">
 
-                            <Breadcrumb courseName={courseName} itemName={assignmentName} />
+                            {loading ? (
+                                <div className="text-center py-20">
+                                    <p className="text-gray-500">Đang tải...</p>
+                                </div>
+                            ) : !assignment ? (
+                                <div className="text-center py-20">
+                                    <p className="text-red-500">Không tìm thấy bài tập</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <Breadcrumb courseName={courseName} itemName={assignmentName} />
 
-                            {/* TITLE */}
-                            <div className='flex items-center space-x-3'>
-                                <MdUploadFile className='text-cyan-500 w-8 h-8' />
-                                <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
-                                    {assignmentName}
-                                </h2>
-                            </div>
+                                    {/* TITLE */}
+                                    <div className='flex items-center space-x-3'>
+                                        <MdUploadFile className='text-cyan-500 w-8 h-8' />
+                                        <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
+                                            {assignmentName}
+                                        </h2>
+                                    </div>
 
-                            {/* THÔNG TIN NGÀY & TRẠNG THÁI */}
-                            <div className="bg-white border rounded-lg p-5 shadow-sm space-y-2 text-sm">
-                                <p><strong>Ngày đăng:</strong> {formatDateTime(ngayDang)}</p>
-                                <p><strong>Hạn nộp:</strong> {formatDateTime(hanNop)}</p>
-                            </div>
+                                    {/* THÔNG TIN NGÀY & TRẠNG THÁI */}
+                                    <div className="bg-white border rounded-lg p-5 shadow-sm space-y-2 text-sm">
+                                        <p><strong>Ngày đăng:</strong> {formatDateTime(assignment.ngayTao)}</p>
+                                        <p><strong>Hạn nộp:</strong> {formatDateTime(assignment.hanNop)}</p>
+                                    </div>
 
-                            <hr className="border-gray-300" />
+                                    <hr className="border-gray-300" />
 
-                            {/* ASSIGNMENT TEXT */}
-                            <div className='bg-gray-50 p-4 rounded whitespace-pre-line'>
-                                <p className="text-gray-700 text-sm">{text || "Không có nội dung."}</p>
-                            </div>
-
-                            {/* NÚT "THÊM BÀI NỘP" */}
-                            <div>
-                                <button
-                                    onClick={() => setShowFileInput(prev => !prev)}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-orange-500 transition"
-                                >
-                                    {showFileInput ? "Ẩn khu vực nộp bài" : "Thêm bài nộp"}
-                                </button>
-                            </div>
-
-                            {/* KHU VỰC CHỌN FILE NỐI GIỐNG REPLYFORM */}
-                            {showFileInput && (
-                                <div className="mt-4 space-y-6">
-                                    <label className="font-semibold block mb-2">Nộp bài:</label>
-                                    <p className="text-xs text-gray-500 mb-2">
-                                        Số lượng tập tin đính kèm tối đa 3
-                                    </p>
-
-                                    {/* Vùng kéo thả và click chọn file */}
-                                    <div
-                                        className="border-2 border-dashed border-gray-300 rounded-md p-8 text-center bg-gray-50 cursor-pointer"
-                                        onClick={() => document.getElementById('file-upload').click()}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            const droppedFiles = Array.from(e.dataTransfer.files);
-                                            setAttachedFiles(prev => [...prev, ...droppedFiles].slice(0, 3));
-                                        }}
-                                    >
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
-                                            </div>
-                                            <p className="text-sm text-gray-600 mt-2">Thêm các tập tin bằng cách kéo thả hoặc nhấn để chọn file.</p>
-                                        </div>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            className="hidden"
-                                            id="file-upload"
-                                            onChange={handleSelectFile}
+                                    {/* ASSIGNMENT TEXT */}
+                                    <div className='bg-gray-50 p-4 rounded'>
+                                        <div 
+                                            className="text-gray-700 text-sm prose prose-sm max-w-none"
+                                            dangerouslySetInnerHTML={{ __html: assignment.noiDung || "Không có nội dung." }}
                                         />
                                     </div>
 
-                                    {/* Danh sách file đã chọn */}
-                                    {attachedFiles.length > 0 && (
-                                        <div className="my-6 flex flex-wrap gap-4">
-                                            {attachedFiles.map((file, idx) => (
-                                                <div key={idx} className="flex flex-col items-center text-sm w-20">
-                                                    <div className="relative border rounded p-2 bg-white w-full flex justify-center items-center">
-                                                        <TbFileSettings className="w-10 h-10 text-gray-600" />
-                                                        <button
-                                                            type="button"
-                                                            className="absolute top-0 right-0 text-red-500 hover:text-red-700"
-                                                            onClick={() => handleRemoveFile(idx)}
-                                                            aria-label="Xóa tập tin"
-                                                        >
-                                                            ✕
-                                                        </button>
+                                    {/* NÚT "THÊM BÀI NỘP" hoặc "CHỈNH SỬA BÀI NỘP" */}
+                                    <div className="flex gap-3">
+                                        {!hasSubmitted && (
+                                            <button
+                                                onClick={() => setShowFileInput(prev => !prev)}
+                                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-orange-500 transition disabled:bg-gray-400"
+                                                disabled={uploading}
+                                            >
+                                                {showFileInput ? "Ẩn khu vực nộp bài" : "Thêm bài nộp"}
+                                            </button>
+                                        )}
+                                        
+                                        {hasSubmitted && (
+                                            <button
+                                                onClick={handleEdit}
+                                                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-blue-500 transition disabled:bg-gray-400"
+                                                disabled={uploading}
+                                            >
+                                                {showFileInput && isEditing ? "Ẩn khu vực chỉnh sửa" : "Chỉnh sửa bài nộp"}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* KHU VỰC CHỌN FILE */}
+                                    {showFileInput && (
+                                        <div className="mt-4 space-y-6">
+                                            <label className="font-semibold block mb-2">
+                                                {isEditing ? "Chỉnh sửa bài nộp:" : "Nộp bài:"}
+                                            </label>
+                                            <p className="text-xs text-gray-500 mb-2">
+                                                Số lượng tập tin đính kèm tối đa 3
+                                            </p>
+
+                                            {/* Vùng kéo thả và click chọn file */}
+                                            <div
+                                                className="border-2 border-dashed border-gray-300 rounded-md p-8 text-center bg-gray-50 cursor-pointer hover:border-blue-400 transition-colors"
+                                                onClick={() => document.getElementById('file-upload').click()}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    const droppedFiles = Array.from(e.dataTransfer.files);
+                                                    setAttachedFiles(prev => [...prev, ...droppedFiles].slice(0, 3));
+                                                }}
+                                            >
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                                        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                        </svg>
                                                     </div>
-                                                    <span className="wrap-break-word text-center mt-1">{file.name}</span>
+                                                    <p className="text-sm text-gray-600 mt-2">Thêm các tập tin bằng cách kéo thả hoặc nhấn để chọn file.</p>
                                                 </div>
-                                            ))}
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    className="hidden"
+                                                    id="file-upload"
+                                                    onChange={handleSelectFile}
+                                                    disabled={uploading}
+                                                />
+                                            </div>
+
+                                            {/* Danh sách file đã nộp trước đó (khi edit) */}
+                                            {isEditing && existingFiles.length > 0 && (
+                                                <div className="my-6">
+                                                    <p className="text-sm font-medium mb-3 text-gray-700">File đã nộp:</p>
+                                                    <div className="flex flex-wrap gap-4">
+                                                        {existingFiles.map((file, idx) => (
+                                                            <div key={idx} className="flex flex-col items-center text-sm w-32 border rounded-lg p-3 bg-blue-50">
+                                                                <div className="relative w-full flex justify-center items-center mb-2">
+                                                                    <TbFileSettings className="w-10 h-10 text-blue-600" />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 text-xs"
+                                                                        onClick={() => handleRemoveExistingFile(idx)}
+                                                                        aria-label="Xóa tập tin"
+                                                                        disabled={uploading}
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                                <span className="wrap-break-word text-center text-xs truncate w-full" title={file.fileName}>
+                                                                    {file.fileName}
+                                                                </span>
+                                                                <span className="text-xs text-gray-500 mt-1">
+                                                                    {(file.fileSize / 1024).toFixed(1)} KB
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Danh sách file mới được chọn */}
+                                            {attachedFiles.length > 0 && (
+                                                <div className="my-6">
+                                                    <p className="text-sm font-medium mb-3 text-gray-700">
+                                                        {isEditing ? 'File mới thêm:' : 'File đã chọn:'}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-4">
+                                                        {attachedFiles.map((file, idx) => (
+                                                            <div key={idx} className="flex flex-col items-center text-sm w-32 border rounded-lg p-3 bg-green-50">
+                                                                <div className="relative w-full flex justify-center items-center mb-2">
+                                                                    <TbFileSettings className="w-10 h-10 text-green-600" />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 text-xs"
+                                                                        onClick={() => handleRemoveFile(idx)}
+                                                                        aria-label="Xóa tập tin"
+                                                                        disabled={uploading}
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                                <span className="wrap-break-word text-center text-xs truncate w-full" title={file.name}>
+                                                                    {file.name}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Nút Lưu */}
+                                            <div>
+                                                <button
+                                                    onClick={handleSave}
+                                                    className="px-6 py-2 bg-orange-500 text-white rounded hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                                    disabled={uploading || (attachedFiles.length === 0 && existingFiles.length === 0)}
+                                                >
+                                                    {uploading ? (isEditing ? 'Đang cập nhật...' : 'Đang nộp bài...') : (isEditing ? 'Cập nhật bài nộp' : 'Lưu bài nộp')}
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
 
-                                    {/* Nút Lưu */}
-                                    <div>
-                                        <button
-                                            onClick={handleSave}
-                                            className="px-6 py-2 bg-orange-500 text-white rounded hover:bg-green-700 transition"
-                                        >
-                                            Lưu bài nộp
-                                        </button>
+                                    {/* BẢNG HIỂN THỊ TRẠNG THÁI */}
+                                    <div className="mt-6 p-5 bg-white border rounded-lg shadow-sm max-w-md">
+                                        <h3 className="font-bold text-lg mb-3">Trạng thái bài nộp</h3>
+
+                                        <table className="w-full border-collapse border border-gray-300 text-sm">
+                                            <tbody>
+                                                {/* Row Trạng thái */}
+                                                <tr className="border-b border-gray-300">
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100 w-1/3">
+                                                        Trạng thái
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {hasSubmitted ? (
+                                                            <span className={`px-3 py-1 rounded font-semibold ${submissionStatus?.statusClass || 'bg-green-100 text-black'}`}>
+                                                                {submissionStatus?.isLate ? 'Trễ hạn' : 'Đã nộp'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-red-500 font-semibold">Chưa nộp</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+
+                                                {/* Row Thời gian còn lại */}
+                                                <tr className="border-b border-gray-300">
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Thời gian {hasSubmitted ? 'nộp' : 'còn lại'}
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {hasSubmitted ? (
+                                                            <span className={`px-3 py-1 rounded font-semibold ${submissionStatus?.timeClass || ''}`}>
+                                                                {submissionStatus?.message || 'Đã nộp'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`${timeLeft === 'Đã trễ hạn' ? 'px-3 py-1 rounded font-semibold bg-red-100 text-black' : ''}`}>
+                                                                {timeLeft === 'Đã trễ hạn' ? timeLeft : (timeLeft ? `Còn lại ${timeLeft}` : 'Đang tính...')}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+
+                                                {/* Row File đã gửi */}
+                                                <tr>
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Bài nộp
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {submissions.length === 0 ? (
+                                                            <span className="text-gray-500">Chưa có bài nộp</span>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                {submissions.map((submission, idx) => (
+                                                                    <div key={idx} className="text-xs">
+                                                                        <p className="font-medium">{formatDateTime(submission.ngayTao)}</p>
+                                                                        {submission.chiTiets && submission.chiTiets.length > 0 && (
+                                                                            <ul className="list-disc list-inside ml-2 mt-1">
+                                                                                {submission.chiTiets.map((file, fIdx) => (
+                                                                                    <li key={fIdx} className="text-blue-600 hover:underline">
+                                                                                        <a href={file.filePath} target="_blank" rel="noopener noreferrer">
+                                                                                            {file.fileName}
+                                                                                        </a>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
+                                </>
                             )}
-
-                            {/* BẢNG HIỂN THỊ TRẠNG THÁI */}
-                            <div className="mt-6 p-5 bg-white border rounded-lg shadow-sm max-w-md">
-                                <h3 className="font-bold text-lg mb-3">Trạng thái bài nộp</h3>
-
-                                <table className="w-full border-collapse border border-gray-300 text-sm">
-                                    <tbody>
-                                        {/* Row Trạng thái */}
-                                        <tr className="border-b border-gray-300">
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100 w-1/3">
-                                                Trạng thái
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {trangThai === "da-nop" ? (
-                                                    <span className="text-green-600 font-semibold">Đã nộp</span>
-                                                ) : (
-                                                    <span className="text-red-500 font-semibold">Chưa nộp</span>
-                                                )}
-                                            </td>
-                                        </tr>
-
-                                        {/* Row Thời gian còn lại */}
-                                        <tr className="border-b border-gray-300">
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                Thời gian còn lại
-                                            </td>
-                                            <td className="px-4 py-2">Còn lại {timeLeft}</td>
-                                        </tr>
-
-                                        {/* Row File đã gửi */}
-                                        <tr>
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                File đã gửi
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {attachedFiles.length === 0 ? (
-                                                    <span className="text-gray-500">Chưa có file</span>
-                                                ) : (
-                                                    <ul className="list-disc list-inside space-y-1">
-                                                        {attachedFiles.map((f, idx) => (
-                                                            <li key={idx}>{f.name}</li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
 
 
                         </div>

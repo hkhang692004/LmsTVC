@@ -1,16 +1,23 @@
 import React, { useState } from 'react'
 import { Bell, MessageSquare, ChevronDown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom';
 import useUserStore from '@/stores/useUserStore';
+import axiosClient from '@/lib/axios';
+import { toast } from 'sonner';
 
 const MyHeader = () => {
-
+    const navigate = useNavigate();
     const [openDropDown, setOpenDropDown] = useState(null);
     const user = useUserStore(state => state.user);
+    const clearUser = useUserStore(state => state.clearUser);
     const avatar = user?.avatar || null;
+    
+    console.log('[MyHeader] User avatar:', avatar); // Debug log
     
     // Avatar default: vòng tròn + chữ cái đầu của tên
     const getAvatarDisplay = () => {
       if (avatar) {
+        console.log('[MyHeader] Rendering image avatar:', avatar);
         return (
           <img 
             src={avatar} 
@@ -21,6 +28,7 @@ const MyHeader = () => {
       }
       
       // Avatar default - chữ cái đầu
+      console.log('[MyHeader] Rendering default avatar for user:', user?.ten);
       const initials = user?.ten?.charAt(0).toUpperCase() || '?';
       const bgColor = ['bg-blue-300', 'bg-purple-400', 'bg-pink-400', 'bg-green-300'][
         (user?.id?.charCodeAt(0) || 0) % 4
@@ -33,6 +41,19 @@ const MyHeader = () => {
       );
     };
 
+    const handleLogout = async () => {
+        try {
+            await axiosClient.post('/api/users/logout');
+            clearUser();
+            toast.success('Đăng xuất thành công');
+            navigate('/');
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Clear user even if API fails
+            clearUser();
+            navigate('/');
+        }
+    };
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-blue-500 py-2 shadow-md">
@@ -115,11 +136,23 @@ const MyHeader = () => {
                         {openDropDown === "userMenu" && (
                             <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border overflow-hidden">
                                 <div className="py-1">
-                                    <a href="/mycourse" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ</a>
-                                    <a href="/mycourse" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cài đặt</a>
+                                    <button
+                                        onClick={() => {
+                                            setOpenDropDown(null);
+                                            navigate('/profile');
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        Hồ sơ
+                                    </button>
                                 </div>
                                 <div className="border-t py-1">
-                                    <a href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Đăng xuất</a>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        Đăng xuất
+                                    </button>
                                 </div>
                             </div>
                         )}

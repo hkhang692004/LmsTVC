@@ -502,7 +502,7 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 loaiNoiDung: 'baiTap',
                 idChuDe: 'CD004',
                 idNguoiDung: 'GV001',
-                hanNop: new Date('2026-01-01'),
+                hanNop: new Date('2025-12-12'),
                 status: 'an',
                 ngayTao: new Date('2025-12-15')
             },
@@ -699,7 +699,7 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 moTa: 'Bài kiểm tra giữa kỳ môn Toán Cao Cấp (OOP)',
                 idLop: 'LP001',
                 thoiGianBatDau: new Date('2025-12-10'),
-                thoiGianKetThuc: new Date('2026-02-15'),
+                thoiGianKetThuc: new Date('2025-12-15'),
                 thoiLuong: 60,
                 tongDiem: 10,
                 status: 'dangMo',
@@ -713,12 +713,12 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
                 tieuDe: 'Kiểm tra cuối kỳ - OOP',
                 moTa: 'Bài kiểm tra cuối kỳ môn Toán Cao Cấp (OOP)',
                 idLop: 'LP001',
-                thoiGianBatDau: new Date('2025-12-15'),
-                thoiGianKetThuc: new Date('2026-03-15'),
+                thoiGianBatDau: new Date('2025-12-12'),
+                thoiGianKetThuc: new Date('2025-12-13'),
                 thoiLuong: 90,
                 tongDiem: 10,
                 status: 'dangMo',
-                choPhepXemDiem: false
+                choPhepXemDiem: true
             }
         });
         console.log('✅ BaiKiemTra seeded');
@@ -730,83 +730,84 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
             {
                 id: 'CH001',
                 noiDung: 'Lớp (Class) trong OOP là gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT001',
-                diemCauHoi: 2,
-                ngayTao: new Date('2025-12-10')
+                diemToiDa: 2,
+                thuTu: 1,
             },
             {
                 id: 'CH002',
                 noiDung: 'Đối tượng (Object) được tạo từ đâu?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT001',
-                diemCauHoi: 2,
-                ngayTao: new Date('2025-12-10')
+                diemToiDa: 2,
+               
+                 thuTu: 2,
             },
             {
                 id: 'CH003',
                 noiDung: 'Kế thừa (Inheritance) có ý nghĩa gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'nhieuDapAn',
                 idBaiKiemTra: 'BKT001',
-                diemCauHoi: 2,
-                ngayTao: new Date('2025-12-10')
+                diemToiDa: 2,
+                 thuTu: 3,
             },
             {
                 id: 'CH004',
                 noiDung: 'Đa hình (Polymorphism) là khái niệm nào?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT001',
-                diemCauHoi: 2,
-                ngayTao: new Date('2025-12-10')
+                diemToiDa: 2,
+                 thuTu: 4,
             },
             {
                 id: 'CH005',
                 noiDung: 'Encapsulation có liên quan đến gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT001',
-                diemCauHoi: 2,
-                ngayTao: new Date('2025-12-10')
+                diemToiDa: 2,
+                 thuTu: 5,
             },
             // BKT002 - Kiểm tra cuối kỳ
             {
                 id: 'CH006',
                 noiDung: 'Constructor trong Java được gọi khi nào?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT002',
-                diemCauHoi: 2,
-                ngayTao: new Date('2026-01-01')
+                diemToiDa: 2,
+                 thuTu: 1,
             },
             {
                 id: 'CH007',
                 noiDung: 'Phương thức static có tính chất gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT002',
-                diemCauHoi: 2,
-                ngayTao: new Date('2026-01-01')
+                diemToiDa: 2,
+                 thuTu: 2,
             },
             {
                 id: 'CH008',
                 noiDung: 'Interface khác với Abstract Class như thế nào?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT002',
-                diemCauHoi: 2,
-                ngayTao: new Date('2026-01-01')
+                diemToiDa: 2,
+                 thuTu: 3,
             },
             {
                 id: 'CH009',
                 noiDung: 'Từ khóa "this" dùng để làm gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT002',
-                diemCauHoi: 2,
-                ngayTao: new Date('2026-01-01')
+                diemToiDa: 2,
+                thuTu: 4,
             },
             {
                 id: 'CH010',
                 noiDung: 'Exception Handling dùng để xử lý cái gì?',
-                loaiCauHoi: 'tracNghiem',
+                loaiCauHoi: 'motDapAn',
                 idBaiKiemTra: 'BKT002',
-                diemCauHoi: 2,
-                ngayTao: new Date('2026-01-01')
+                diemToiDa: 2,
+                 thuTu: 5,
             }
         ];
         await CauHoi.bulkCreate(cauHoiData, { ignoreDuplicates: true });
@@ -816,64 +817,64 @@ Mong các em lưu ý và sắp xếp thời gian hợp lý.`,
         console.log('📚 Seeding LuaChon...');
         const luaChonData = [
             // CH001 - Lớp là gì?
-            { id: 'LC001', noiDung: 'Mẫu thiết kế để tạo đối tượng', idCauHoi: 'CH001', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
-            { id: 'LC002', noiDung: 'Một tập hợp dữ liệu', idCauHoi: 'CH001', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC003', noiDung: 'Một hàm trong chương trình', idCauHoi: 'CH001', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC004', noiDung: 'Một loại biến toàn cục', idCauHoi: 'CH001', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC001', noiDung: 'Mẫu thiết kế để tạo đối tượng', idCauHoi: 'CH001', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC002', noiDung: 'Một tập hợp dữ liệu', idCauHoi: 'CH001', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC003', noiDung: 'Một hàm trong chương trình', idCauHoi: 'CH001', laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC004', noiDung: 'Một loại biến toàn cục', idCauHoi: 'CH001', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
             
             // CH002 - Đối tượng được tạo từ đâu?
-            { id: 'LC005', noiDung: 'Từ lớp (Class)', idCauHoi: 'CH002', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
-            { id: 'LC006', noiDung: 'Từ hàm', idCauHoi: 'CH002', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC007', noiDung: 'Từ module', idCauHoi: 'CH002', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC008', noiDung: 'Từ file', idCauHoi: 'CH002', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC005', noiDung: 'Từ lớp (Class)', idCauHoi: 'CH002', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC006', noiDung: 'Từ hàm', idCauHoi: 'CH002', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC007', noiDung: 'Từ module', idCauHoi: 'CH002', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC008', noiDung: 'Từ file', idCauHoi: 'CH002', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
             
             // CH003 - Kế thừa là gì?
-            { id: 'LC009', noiDung: 'Sự thừa hưởng tính chất từ lớp cha', idCauHoi: 'CH003', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
-            { id: 'LC010', noiDung: 'Sao chép một lớp', idCauHoi: 'CH003', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC011', noiDung: 'Xóa một lớp', idCauHoi: 'CH003', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC012', noiDung: 'Kết hợp nhiều lớp', idCauHoi: 'CH003', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC009', noiDung: 'Sự thừa hưởng tính chất từ lớp cha',idCauHoi: 'CH003', laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC010', noiDung: 'Sao chép một lớp', idCauHoi: 'CH003', thuTu: 2, laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC011', noiDung: 'Xóa một lớp', idCauHoi: 'CH003', thuTu: 3,laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC012', noiDung: 'Kết hợp nhiều lớp', idCauHoi: 'CH003', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
             
             // CH004 - Đa hình là gì?
-            { id: 'LC013', noiDung: 'Cùng tên nhưng hành vi khác nhau', idCauHoi: 'CH004', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
-            { id: 'LC014', noiDung: 'Nhiều lớp con', idCauHoi: 'CH004', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC015', noiDung: 'Nhiều biến', idCauHoi: 'CH004', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC016', noiDung: 'Nhiều hàm', idCauHoi: 'CH004', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC013', noiDung: 'Cùng tên nhưng hành vi khác nhau', idCauHoi: 'CH004', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC014', noiDung: 'Nhiều lớp con', idCauHoi: 'CH004', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC015', noiDung: 'Nhiều biến', idCauHoi: 'CH004', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC016', noiDung: 'Nhiều hàm', idCauHoi: 'CH004', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
             
             // CH005 - Encapsulation
-            { id: 'LC017', noiDung: 'Che giấu dữ liệu bên trong lớp', idCauHoi: 'CH005', thuTuHien: 1, dung: true, ngayTao: new Date('2025-12-10') },
-            { id: 'LC018', noiDung: 'Kết hợp các lớp lại', idCauHoi: 'CH005', thuTuHien: 2, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC019', noiDung: 'Sắp xếp code đẹp hơn', idCauHoi: 'CH005', thuTuHien: 3, dung: false, ngayTao: new Date('2025-12-10') },
-            { id: 'LC020', noiDung: 'Xóa các phương thức', idCauHoi: 'CH005', thuTuHien: 4, dung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC017', noiDung: 'Che giấu dữ liệu bên trong lớp', idCauHoi: 'CH005', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2025-12-10') },
+            { id: 'LC018', noiDung: 'Kết hợp các lớp lại', idCauHoi: 'CH005', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC019', noiDung: 'Sắp xếp code đẹp hơn', idCauHoi: 'CH005', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
+            { id: 'LC020', noiDung: 'Xóa các phương thức', idCauHoi: 'CH005', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2025-12-10') },
             
             // CH006 - Constructor
-            { id: 'LC021', noiDung: 'Khi tạo đối tượng mới', idCauHoi: 'CH006', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
-            { id: 'LC022', noiDung: 'Khi xóa đối tượng', idCauHoi: 'CH006', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC023', noiDung: 'Khi chạy chương trình', idCauHoi: 'CH006', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC024', noiDung: 'Khi gọi phương thức', idCauHoi: 'CH006', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC021', noiDung: 'Khi tạo đối tượng mới', idCauHoi: 'CH006', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC022', noiDung: 'Khi xóa đối tượng', idCauHoi: 'CH006', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC023', noiDung: 'Khi chạy chương trình', idCauHoi: 'CH006', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC024', noiDung: 'Khi gọi phương thức', idCauHoi: 'CH006', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
             
             // CH007 - Phương thức static
-            { id: 'LC025', noiDung: 'Không cần khởi tạo đối tượng để gọi', idCauHoi: 'CH007', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
-            { id: 'LC026', noiDung: 'Chỉ dùng được một lần', idCauHoi: 'CH007', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC027', noiDung: 'Không thể thay đổi', idCauHoi: 'CH007', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC028', noiDung: 'Phải là public', idCauHoi: 'CH007', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC025', noiDung: 'Không cần khởi tạo đối tượng để gọi', idCauHoi: 'CH007', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC026', noiDung: 'Chỉ dùng được một lần', idCauHoi: 'CH007', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC027', noiDung: 'Không thể thay đổi', idCauHoi: 'CH007', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC028', noiDung: 'Phải là public', idCauHoi: 'CH007', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
             
             // CH008 - Interface vs Abstract Class
-            { id: 'LC029', noiDung: 'Interface không có implementation, Abstract Class có thể có', idCauHoi: 'CH008', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
-            { id: 'LC030', noiDung: 'Giống hệt nhau', idCauHoi: 'CH008', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC031', noiDung: 'Interface có state, Abstract Class không', idCauHoi: 'CH008', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC032', noiDung: 'Abstract Class dùng cho số', idCauHoi: 'CH008', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC029', noiDung: 'Interface không có implementation, Abstract Class có thể có', idCauHoi: 'CH008', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC030', noiDung: 'Giống hệt nhau', idCauHoi: 'CH008', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC031', noiDung: 'Interface có state, Abstract Class không', idCauHoi: 'CH008', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC032', noiDung: 'Abstract Class dùng cho số', idCauHoi: 'CH008', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
             
             // CH009 - Từ khóa this
-            { id: 'LC033', noiDung: 'Tham chiếu đến đối tượng hiện tại', idCauHoi: 'CH009', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
-            { id: 'LC034', noiDung: 'Tham chiếu đến lớp cha', idCauHoi: 'CH009', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC035', noiDung: 'Tham chiếu đến biến toàn cục', idCauHoi: 'CH009', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC036', noiDung: 'Không dùng để tham chiếu gì cả', idCauHoi: 'CH009', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC033', noiDung: 'Tham chiếu đến đối tượng hiện tại', idCauHoi: 'CH009', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC034', noiDung: 'Tham chiếu đến lớp cha', idCauHoi: 'CH009', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC035', noiDung: 'Tham chiếu đến biến toàn cục', idCauHoi: 'CH009', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC036', noiDung: 'Không dùng để tham chiếu gì cả', idCauHoi: 'CH009', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
             
             // CH010 - Exception Handling
-            { id: 'LC037', noiDung: 'Xử lý lỗi tại thời gian chạy', idCauHoi: 'CH010', thuTuHien: 1, dung: true, ngayTao: new Date('2026-01-01') },
-            { id: 'LC038', noiDung: 'Xóa file', idCauHoi: 'CH010', thuTuHien: 2, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC039', noiDung: 'Tạo biến mới', idCauHoi: 'CH010', thuTuHien: 3, dung: false, ngayTao: new Date('2026-01-01') },
-            { id: 'LC040', noiDung: 'Gọi hàm', idCauHoi: 'CH010', thuTuHien: 4, dung: false, ngayTao: new Date('2026-01-01') }
+            { id: 'LC037', noiDung: 'Xử lý lỗi tại thời gian chạy', idCauHoi: 'CH010', thuTu: 1, laDapAnDung: true, ngayTao: new Date('2026-01-01') },
+            { id: 'LC038', noiDung: 'Xóa file', idCauHoi: 'CH010', thuTu: 2, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC039', noiDung: 'Tạo biến mới', idCauHoi: 'CH010', thuTu: 3, laDapAnDung: false, ngayTao: new Date('2026-01-01') },
+            { id: 'LC040', noiDung: 'Gọi hàm', idCauHoi: 'CH010', thuTu: 4, laDapAnDung: false, ngayTao: new Date('2026-01-01') }
         ];
         await LuaChon.bulkCreate(luaChonData, { ignoreDuplicates: true });
         console.log('✅ LuaChon seeded');

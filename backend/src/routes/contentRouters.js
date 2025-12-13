@@ -14,6 +14,8 @@ router.get("/:id/posts", ContentController.getForumPosts);
 router.get("/:id/comments", ContentController.getCommentsByContentId);
 // GET /api/content/:id/files - Lấy folder children documents (Directory page)
 router.get("/:id/files", ContentController.getFolderFiles);
+// GET /api/content/:id/submissions - Lấy bài nộp của tôi cho bài tập (student)
+router.get("/:id/submissions", checkLogin, ContentController.getMySubmissions);
 // GET /api/content/:id/assignment-view - Lấy bài tập + bài nộp của tôi (student view)
 router.get("/:id/assignment-view", ContentController.getAssignmentView);
 // GET /api/content/files/:fileId/download - Download file with correct filename

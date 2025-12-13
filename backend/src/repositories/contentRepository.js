@@ -107,8 +107,16 @@ class ContentRepository {
                 }
             }
 
-            // Update content
-            await NoiDung.update(updateData, {
+            // Update content - auto update ngayTao if it's a submission (baiNop)
+            const finalUpdateData = { ...updateData };
+            
+            // Auto update ngayTao for submissions when updating
+            const currentContent = await NoiDung.findByPk(contentId, { transaction });
+            if (currentContent && currentContent.loaiNoiDung === 'baiNop') {
+                finalUpdateData.ngayTao = new Date();
+            }
+            
+            await NoiDung.update(finalUpdateData, {
                 where: { id: contentId },
                 transaction
             });
@@ -465,6 +473,47 @@ class ContentRepository {
         } catch (error) {
             console.error('Database error in findDocumentsByParentId:', error);
             throw new DatabaseError('Lỗi khi tìm danh sách tài liệu');
+        }
+    }
+
+    // Find submissions (baiNop) by assignment ID and user ID
+    async findSubmissionsByAssignment(assignmentId, userId) {
+        try {
+            const submissions = await NoiDung.findAll({
+                where: {
+                    idNoiDungCha: assignmentId,
+                    loaiNoiDung: 'baiNop',
+                    idNguoiDung: userId
+                },
+                include: [
+                    {
+                        model: NguoiDung,
+                        as: 'nguoiTao',
+                        required: false,
+                        attributes: ['id', 'ten', 'email']
+                    },
+                    {
+                        model: NoiDungChiTiet,
+                        as: 'chiTiets',
+                        required: false,
+                        attributes: [
+                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
+                            'fileName', 'fileType', 'fileSize', 'ngayTao'
+                        ]
+                    }
+                ],
+                order: [['ngayTao', 'DESC']],
+                attributes: [
+                    'id', 'idChuDe', 'idNguoiDung', 'idNoiDungCha', 'tieuDe',
+                    'noiDung', 'loaiNoiDung', 'ngayTao', 'status'
+                ]
+            });
+
+            console.log('[ContentRepository] Found submissions:', submissions.length);
+            return submissions;
+        } catch (error) {
+            console.error('Database error in findSubmissionsByAssignment:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách bài nộp');
         }
     }
 
