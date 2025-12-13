@@ -33,10 +33,10 @@ router.get("/:id/stats", checkLogin, checkRole(['admin', 'giangVien']), ExamCont
 router.get("/:id/submissions", checkLogin, checkRole(['admin', 'giangVien']), ExamController.getExamSubmissions);
 
 // === QUESTIONS ===
-// POST /api/exams/:id/questions - Tạo câu hỏi mới (hỗ trợ single hoặc multiple)
+// POST /api/exams/:examId/questions - Tạo câu hỏi mới (hỗ trợ single hoặc multiple)
 // Body: { questions: [{noiDung, diemToiDa, loaiCauHoi, luaChons: [...]}] }
 // Hoặc: {noiDung, diemToiDa, loaiCauHoi, luaChons: [...]} cho single question
-router.post("/:id/questions", checkLogin, checkRole(['admin', 'giangVien']), QuestionController.createQuestion);
+router.post("/:examId/questions", checkLogin, checkRole(['admin', 'giangVien']), QuestionController.createQuestion);
 
 // PUT /api/exams/questions/:id - Update câu hỏi (trả về object đã update)
 router.put("/questions/:id", checkLogin, checkRole(['admin', 'giangVien']), QuestionController.updateQuestion);

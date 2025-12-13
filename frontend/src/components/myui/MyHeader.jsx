@@ -12,12 +12,9 @@ const MyHeader = () => {
     const clearUser = useUserStore(state => state.clearUser);
     const avatar = user?.avatar || null;
     
-    console.log('[MyHeader] User avatar:', avatar); // Debug log
-    
     // Avatar default: vòng tròn + chữ cái đầu của tên
     const getAvatarDisplay = () => {
       if (avatar) {
-        console.log('[MyHeader] Rendering image avatar:', avatar);
         return (
           <img 
             src={avatar} 
@@ -27,12 +24,32 @@ const MyHeader = () => {
         );
       }
       
-      // Avatar default - chữ cái đầu
-      console.log('[MyHeader] Rendering default avatar for user:', user?.ten);
-      const initials = user?.ten?.charAt(0).toUpperCase() || '?';
-      const bgColor = ['bg-blue-300', 'bg-purple-400', 'bg-pink-400', 'bg-green-300'][
-        (user?.id?.charCodeAt(0) || 0) % 4
-      ];
+      // Avatar default - chữ cái đầu của TÊN (từ cuối cùng)
+      const userName = user?.ten?.trim() || user?.name?.trim() || user?.hoTen?.trim() || user?.email?.split('@')[0] || '';
+      
+      // Get first character of last word (Vietnamese name pattern: Họ Đệm Tên)
+      let initials = '?';
+      if (userName && userName.length > 0) {
+        const nameParts = userName.trim().split(/\s+/); // Split by whitespace
+        const firstName = nameParts[nameParts.length - 1]; // Get last word (Tên)
+        initials = firstName.charAt(0).toUpperCase();
+      } else if (user?.email) {
+        initials = user.email.charAt(0).toUpperCase();
+      } else if (user?.role) {
+        initials = user.role.charAt(0).toUpperCase();
+      }
+      
+      // Random color based on user id/email (consistent for same user)
+      const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-indigo-500', 'bg-teal-500'];
+      const seedString = user?.id || user?.email || userName || 'default';
+      
+      // Simple hash function to get consistent color for same user
+      let hash = 0;
+      for (let i = 0; i < seedString.length; i++) {
+        hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const colorIndex = Math.abs(hash) % colors.length;
+      const bgColor = colors[colorIndex];
       
       return (
         <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center text-white text-sm font-semibold`}>

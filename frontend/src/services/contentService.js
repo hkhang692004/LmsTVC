@@ -27,6 +27,11 @@ const ContentService = {
   // Lấy danh sách bài nộp của sinh viên cho bài tập cụ thể
   getMySubmissions: (assignmentId) => {
     return axiosClient.get(`/api/content/${assignmentId}/submissions`);
+  },
+
+  // Lấy tất cả bài nộp cho bài tập (dành cho giảng viên)
+  getAllSubmissions: (assignmentId, page = 1, limit = 10) => {
+    return axiosClient.get(`/api/content/${assignmentId}/all-submissions?page=${page}&limit=${limit}`);
   }
 };
 

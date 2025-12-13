@@ -19,6 +19,36 @@ class ContentService {
         return `ND${newNumber}`;
     }
 
+    // Generate unique ID for content detail (NDCT001, NDCT002, etc.)
+    async generateContentDetailId() {
+        const lastDetail = await ContentRepository.findLastContentDetail();
+        if (!lastDetail || !lastDetail.id) {
+            return 'NDCT001';
+        }
+        const lastNumber = parseInt(lastDetail.id.replace('NDCT', ''));
+        if (isNaN(lastNumber)) {
+            console.error('[ContentService] Invalid last content detail ID:', lastDetail.id);
+            return 'NDCT001';
+        }
+        const newNumber = String(lastNumber + 1).padStart(3, '0');
+        return `NDCT${newNumber}`;
+    }
+
+    // Extract file extension from filename
+    getFileExtension(filename) {
+        if (!filename) return 'unknown';
+        const parts = filename.split('.');
+        return parts.length > 1 ? parts.pop().toLowerCase() : 'unknown';
+    }
+
+    // Check if file is video based on extension
+    isVideoFile(filename) {
+        if (!filename) return false;
+        const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', 'mpeg', 'mpg'];
+        const extension = this.getFileExtension(filename);
+        return videoExtensions.includes(extension);
+    }
+
     // Upload files to Cloudinary
     async uploadFilesToCloudinary(files) {
         if (!files || files.length === 0) {
@@ -29,14 +59,23 @@ class ContentService {
             // Use bulk upload for better performance
             const uploadResults = await uploadFiles(files);
             
-            return uploadResults.map(result => ({
-                id: result.public_id,
-                loaiChiTiet: 'file',
-                filePath: result.secure_url,
-                fileName: result.fileName,
-                fileType: files.find(f => f.originalname === result.fileName)?.mimetype || 'unknown',
-                fileSize: result.bytes
-            }));
+            // Generate IDs for each file detail
+            const fileDetailsWithIds = [];
+            for (const result of uploadResults) {
+                const newId = await this.generateContentDetailId();
+                const isVideo = this.isVideoFile(result.fileName);
+                
+                fileDetailsWithIds.push({
+                    id: newId,
+                    loaiChiTiet: isVideo ? 'video' : 'file',
+                    filePath: result.secure_url,
+                    fileName: result.fileName,
+                    fileType: isVideo ? 'video' : this.getFileExtension(result.fileName),
+                    fileSize: result.bytes
+                });
+            }
+            
+            return fileDetailsWithIds;
         } catch (error) {
             console.error('Bulk upload failed:', error);
             throw new Error(`Upload failed: ${error.message}`);
@@ -105,6 +144,34 @@ class ContentService {
                 }
             } else {
                 console.log('[ContentService] No files to upload');
+            }
+
+            // Handle Youtube URL
+            if (contentData.videoUrl) {
+                console.log('[ContentService] Youtube URL detected:', contentData.videoUrl);
+                const youtubeId = await this.generateContentDetailId();
+                fileDetails.push({
+                    id: youtubeId,
+                    loaiChiTiet: 'video',
+                    filePath: contentData.videoUrl,
+                    fileName: 'Youtube Video',
+                    fileType: 'youtube',
+                    fileSize: 0
+                });
+            }
+
+            // Handle external link URL
+            if (contentData.linkUrl) {
+                console.log('[ContentService] Link URL detected:', contentData.linkUrl);
+                const linkId = await this.generateContentDetailId();
+                fileDetails.push({
+                    id: linkId,
+                    loaiChiTiet: 'duongDan',
+                    filePath: contentData.linkUrl,
+                    fileName: 'External Link',
+                    fileType: 'link',
+                    fileSize: 0
+                });
             }
 
             // Create content with files in transaction
@@ -233,6 +300,21 @@ class ContentService {
         }
     }
 
+    async getAllSubmissions(assignmentId, page = 1, limit = 10) {
+        try {
+            console.log('[ContentService] getAllSubmissions for assignment:', assignmentId, 'page:', page, 'limit:', limit);
+            
+            // Fetch all submissions for assignment with pagination
+            const result = await ContentRepository.findAllSubmissionsByAssignment(assignmentId, page, limit);
+            console.log('[ContentService] Total submissions count:', result.total);
+            
+            return result;
+        } catch (error) {
+            console.error('[ContentService] getAllSubmissions error:', error);
+            throw error;
+        }
+    }
+
     // Update content và files
     async updateContent(contentId, updateData, files = [], remainFiles = []) {
         try {
@@ -268,16 +350,20 @@ class ContentService {
             }
 
             // Extract remain file IDs from remainFiles array (if remainFiles contains objects)
-            const remainFileIds = remainFiles.map(file => 
-                typeof file === 'string' ? file : file.id
-            );
+            // Only manage files if files are being uploaded or remainFiles is explicitly provided
+            let remainFileIds = null;
+            if (files.length > 0 || remainFiles.length > 0) {
+                remainFileIds = remainFiles.map(file => 
+                    typeof file === 'string' ? file : file.id
+                );
+            }
 
             // Update content with file management: keep remainFiles + add new files
             const result = await ContentRepository.updateContentWithFiles(
                 contentId,
                 updateData,
                 fileDetails,    // New uploaded files
-                remainFileIds   // Existing files to keep (fileIds)
+                remainFileIds   // Existing files to keep (fileIds) - null means don't touch files
             );
 
             return result;
@@ -295,8 +381,38 @@ class ContentService {
             throw new NotFoundError('Không tìm thấy nội dung');
         }
 
+        // Validate deletion conditions
+        await this.validateDeletion(contentId, content);
+
         // Use bulk delete method with Cloudinary cleanup
         await ContentRepository.deleteWithFiles(contentId);
+    }
+
+    // Validate if content can be deleted
+    async validateDeletion(contentId, content) {
+        const { ValidationError } = await import('../utils/errors.js');
+        
+        // Check if content has children
+        const childrenCount = await ContentRepository.countChildren(contentId);
+        if (childrenCount > 0) {
+            throw new ValidationError(`Không thể xóa vì có ${childrenCount} nội dung con`);
+        }
+
+        // Check if assignment has submissions (for baiTap type)
+        if (content.loaiNoiDung === 'baiTap') {
+            const submissionsCount = await ContentRepository.countSubmissions(contentId);
+            if (submissionsCount > 0) {
+                throw new ValidationError(`Không thể xóa vì đã có ${submissionsCount} học viên nộp bài`);
+            }
+        }
+
+        // Check if exam has student submissions (for baiNop type)
+        if (content.loaiNoiDung === 'baiNop') {
+            const examSubmissionsCount = await ContentRepository.countExamSubmissions(contentId);
+            if (examSubmissionsCount > 0) {
+                throw new ValidationError(`Không thể xóa vì đã có ${examSubmissionsCount} học viên làm kiểm tra`);
+            }
+        }
     }
 
     // Delete content (without Cloudinary cleanup)

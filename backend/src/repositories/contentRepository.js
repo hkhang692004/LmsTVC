@@ -66,28 +66,34 @@ class ContentRepository {
     }
 
     // Update content with new files
-    async updateContentWithFiles(contentId, updateData, newFileDetails = [], remainFileIds = []) {
+    async updateContentWithFiles(contentId, updateData, newFileDetails = [], remainFileIds = null) {
         const transaction = await sequelize.transaction();
 
         try {
-            // Get files to delete from Cloudinary first (before database transaction)
+            // Only manage files if explicitly requested
+            // - If remainFileIds is null/undefined: Don't touch files (keep all existing)
+            // - If remainFileIds is an array (even empty): Manage files (delete non-remain, keep remain)
+            const shouldManageFiles = remainFileIds !== null && remainFileIds !== undefined;
+            
             let filesToDelete = [];
-            if (remainFileIds.length > 0) {
-                filesToDelete = await NoiDungChiTiet.findAll({
-                    where: {
-                        idNoiDung: contentId,
-                        id: { [Op.notIn]: remainFileIds }
-                    },
-                    attributes: ['id'], // id is the publicId for Cloudinary
-                    raw: true
-                });
-            } else {
-                // If no remainFileIds specified, delete all existing files
-                filesToDelete = await NoiDungChiTiet.findAll({
-                    where: { idNoiDung: contentId },
-                    attributes: ['id'],
-                    raw: true
-                });
+            if (shouldManageFiles) {
+                if (remainFileIds.length > 0) {
+                    filesToDelete = await NoiDungChiTiet.findAll({
+                        where: {
+                            idNoiDung: contentId,
+                            id: { [Op.notIn]: remainFileIds }
+                        },
+                        attributes: ['id'],
+                        raw: true
+                    });
+                } else {
+                    // If remainFileIds is empty array, delete all existing files
+                    filesToDelete = await NoiDungChiTiet.findAll({
+                        where: { idNoiDung: contentId },
+                        attributes: ['id'],
+                        raw: true
+                    });
+                }
             }
 
             // Delete files from Cloudinary before database transaction
@@ -121,8 +127,8 @@ class ContentRepository {
                 transaction
             });
 
-            // Delete files from database
-            if (filesToDelete.length > 0) {
+            // Delete files from database only if managing files
+            if (shouldManageFiles && filesToDelete.length > 0) {
                 const idsToDelete = filesToDelete.map(f => f.id);
                 await NoiDungChiTiet.destroy({
                     where: {
@@ -517,6 +523,56 @@ class ContentRepository {
         }
     }
 
+    async findAllSubmissionsByAssignment(assignmentId, page = 1, limit = 10) {
+        try {
+            const offset = (page - 1) * limit;
+            
+            const { count, rows } = await NoiDung.findAndCountAll({
+                where: {
+                    idNoiDungCha: assignmentId,
+                    loaiNoiDung: 'baiNop'
+                },
+                include: [
+                    {
+                        model: NguoiDung,
+                        as: 'nguoiTao',
+                        required: false,
+                        attributes: ['id', 'ten', 'email']
+                    },
+                    {
+                        model: NoiDungChiTiet,
+                        as: 'chiTiets',
+                        required: false,
+                        attributes: [
+                            'id', 'idNoiDung', 'loaiChiTiet', 'filePath',
+                            'fileName', 'fileType', 'fileSize', 'ngayTao'
+                        ]
+                    }
+                ],
+                order: [['ngayTao', 'DESC']],
+                attributes: [
+                    'id', 'idChuDe', 'idNguoiDung', 'idNoiDungCha', 'tieuDe',
+                    'noiDung', 'loaiNoiDung', 'ngayTao', 'status'
+                ],
+                limit: limit,
+                offset: offset
+            });
+
+            console.log('[ContentRepository] Found all submissions:', rows.length, 'of', count);
+            
+            return {
+                submissions: rows,
+                total: count,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(count / limit)
+            };
+        } catch (error) {
+            console.error('Database error in findAllSubmissionsByAssignment:', error);
+            throw new DatabaseError('Lỗi khi tìm danh sách tất cả bài nộp');
+        }
+    }
+
     // Find ALL replies including nested ones (recursive)
     async findAllCommentsByParentIdRecursive(parentContentId) {
         try {
@@ -619,6 +675,77 @@ class ContentRepository {
         } catch (error) {
             console.error('Error finding last content:', error);
             return null;
+        }
+    }
+
+    // Find last content detail by ID to generate next ID
+    async findLastContentDetail() {
+        try {
+            const detail = await NoiDungChiTiet.findOne({
+                where: {
+                    id: {
+                        [Op.like]: 'NDCT%'
+                    }
+                },
+                order: [['id', 'DESC']],
+                attributes: ['id'],
+                raw: true
+            });
+            return detail;
+        } catch (error) {
+            console.error('Error finding last content detail:', error);
+            return null;
+        }
+    }
+
+    // Count children of a content
+    async countChildren(contentId) {
+        try {
+            return await NoiDung.count({
+                where: { idNoiDungCha: contentId }
+            });
+        } catch (error) {
+            console.error('Error counting children:', error);
+            throw new DatabaseError('Lỗi khi đếm nội dung con');
+        }
+    }
+
+    // Count submissions for an assignment
+    async countSubmissions(assignmentId) {
+        try {
+            // Count NoiDung records with loaiNoiDung='baiNop' and idNoiDungCha=assignmentId
+            return await NoiDung.count({
+                where: { 
+                    idNoiDungCha: assignmentId,
+                    loaiNoiDung: 'baiNop'
+                }
+            });
+        } catch (error) {
+            console.error('Error counting submissions:', error);
+            throw new DatabaseError('Lỗi khi đếm bài nộp');
+        }
+    }
+
+    // Count exam submissions (BaiLam records)
+    async countExamSubmissions(contentId) {
+        try {
+            // First get the exam record from content
+            const content = await NoiDung.findByPk(contentId, {
+                attributes: ['id', 'idBaiKiemTra']
+            });
+
+            if (!content || !content.idBaiKiemTra) {
+                return 0;
+            }
+
+            // Count BaiLam records for this exam
+            const { BaiLam } = await import('../models/index.js');
+            return await BaiLam.count({
+                where: { idBaiKiemTra: content.idBaiKiemTra }
+            });
+        } catch (error) {
+            console.error('Error counting exam submissions:', error);
+            throw new DatabaseError('Lỗi khi đếm bài làm');
         }
     }
 

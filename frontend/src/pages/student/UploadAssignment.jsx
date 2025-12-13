@@ -17,9 +17,11 @@ const UploadAssignment = () => {
     const { id: assignmentId } = useParams();
     const selectedClass = useClassStore(state => state.selectedClass);
     const currentUser = useUserStore(state => state.user);
+    const isTeacher = currentUser?.role === 'giangVien';
     
     const [assignment, setAssignment] = useState(null);
-    const [submissions, setSubmissions] = useState([]);
+    const [submissions, setSubmissions] = useState([]); // For student's own submissions
+    const [allSubmissions, setAllSubmissions] = useState([]); // For teacher view
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -27,6 +29,10 @@ const UploadAssignment = () => {
     const [showFileInput, setShowFileInput] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalSubmissions, setTotalSubmissions] = useState(0);
+    const limit = 1; // Số bài nộp mỗi trang - set 1 để dễ test phân trang
 
     // COUNTDOWN
     const [timeLeft, setTimeLeft] = useState("");
@@ -55,8 +61,18 @@ const UploadAssignment = () => {
     useEffect(() => {
         const fetchSubmissions = async () => {
             try {
-                const response = await contentService.getMySubmissions(assignmentId);
-                setSubmissions(response.data?.data || []);
+                if (isTeacher) {
+                    // Giảng viên: lấy tất cả bài nộp của sinh viên với pagination
+                    const response = await contentService.getAllSubmissions(assignmentId, currentPage, limit);
+                    const data = response.data?.data;
+                    setAllSubmissions(data?.submissions || []);
+                    setTotalPages(data?.totalPages || 1);
+                    setTotalSubmissions(data?.total || 0);
+                } else {
+                    // Sinh viên: chỉ lấy bài nộp của mình
+                    const response = await contentService.getMySubmissions(assignmentId);
+                    setSubmissions(response.data?.data || []);
+                }
             } catch (error) {
                 console.error('Error fetching submissions:', error);
                 // Không hiển thị lỗi vì có thể chưa có bài nộp
@@ -66,7 +82,7 @@ const UploadAssignment = () => {
         if (assignmentId) {
             fetchSubmissions();
         }
-    }, [assignmentId]);
+    }, [assignmentId, isTeacher, currentPage]);
     // Countdown effect
     useEffect(() => {
         if (!assignment?.hanNop) return;
@@ -301,28 +317,30 @@ const UploadAssignment = () => {
                                         />
                                     </div>
 
-                                    {/* NÚT "THÊM BÀI NỘP" hoặc "CHỈNH SỬA BÀI NỘP" */}
-                                    <div className="flex gap-3">
-                                        {!hasSubmitted && (
-                                            <button
-                                                onClick={() => setShowFileInput(prev => !prev)}
-                                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-orange-500 transition disabled:bg-gray-400"
-                                                disabled={uploading}
-                                            >
-                                                {showFileInput ? "Ẩn khu vực nộp bài" : "Thêm bài nộp"}
-                                            </button>
-                                        )}
-                                        
-                                        {hasSubmitted && (
-                                            <button
-                                                onClick={handleEdit}
-                                                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-blue-500 transition disabled:bg-gray-400"
-                                                disabled={uploading}
-                                            >
-                                                {showFileInput && isEditing ? "Ẩn khu vực chỉnh sửa" : "Chỉnh sửa bài nộp"}
-                                            </button>
-                                        )}
-                                    </div>
+                                    {/* NÚT "THÊM BÀI NỘP" hoặc "CHỈNH SỬA BÀI NỘP" - CHỈ CHO SINH VIÊN */}
+                                    {!isTeacher && (
+                                        <>
+                                            <div className="flex gap-3">
+                                                {!hasSubmitted && (
+                                                    <button
+                                                        onClick={() => setShowFileInput(prev => !prev)}
+                                                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-orange-500 transition disabled:bg-gray-400"
+                                                        disabled={uploading}
+                                                    >
+                                                        {showFileInput ? "Ẩn khu vực nộp bài" : "Thêm bài nộp"}
+                                                    </button>
+                                                )}
+                                                
+                                                {hasSubmitted && (
+                                                    <button
+                                                        onClick={handleEdit}
+                                                        className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-blue-500 transition disabled:bg-gray-400"
+                                                        disabled={uploading}
+                                                    >
+                                                        {showFileInput && isEditing ? "Ẩn khu vực chỉnh sửa" : "Chỉnh sửa bài nộp"}
+                                                    </button>
+                                                )}
+                                            </div>
 
                                     {/* KHU VỰC CHỌN FILE */}
                                     {showFileInput && (
@@ -510,6 +528,100 @@ const UploadAssignment = () => {
                                             </tbody>
                                         </table>
                                     </div>
+                                        </>
+                                    )}
+
+                                    {/* DANH SÁCH BÀI NỘP - CHỈ CHO GIẢNG VIÊN */}
+                                    {isTeacher && (
+                                        <div className="mt-6 bg-white border rounded-lg shadow-sm p-6">
+                                            <h3 className="font-bold text-xl mb-4 text-orange-500">
+                                                Danh sách bài nộp của sinh viên ({totalSubmissions})
+                                            </h3>
+                                            
+                                            {allSubmissions.length === 0 ? (
+                                                <p className="text-gray-500 text-center py-8">Chưa có sinh viên nào nộp bài</p>
+                                            ) : (
+                                                <>
+                                                    <div className="space-y-4">
+                                                        {allSubmissions.map((submission, idx) => {
+                                                            const submissionTime = new Date(submission.ngayTao).getTime();
+                                                            const deadlineTime = new Date(assignment.hanNop).getTime();
+                                                            const isLate = submissionTime > deadlineTime;
+                                                            
+                                                            return (
+                                                                <div key={idx} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                                    <div className="flex items-start justify-between mb-2">
+                                                                        <div className="flex-1">
+                                                                            <p className="font-semibold text-gray-800">
+                                                                                {submission.nguoiTao?.ten || 'Sinh viên'}
+                                                                            </p>
+                                                                            <p className="text-sm text-gray-500">
+                                                                                {submission.nguoiTao?.email || ''}
+                                                                            </p>
+                                                                        </div>
+                                                                        <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                                                                            isLate ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                                                        }`}>
+                                                                            {isLate ? 'Trễ hạn' : 'Đúng hạn'}
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div className="text-sm text-gray-600 mb-3">
+                                                                        <p><strong>Thời gian nộp:</strong> {formatDateTime(submission.ngayTao)}</p>
+                                                                    </div>
+                                                                    
+                                                                    {submission.chiTiets && submission.chiTiets.length > 0 && (
+                                                                        <div className="mt-3">
+                                                                            <p className="text-sm font-medium mb-2">File đính kèm:</p>
+                                                                            <div className="flex flex-wrap gap-2">
+                                                                                {submission.chiTiets.map((file, fIdx) => (
+                                                                                    <a 
+                                                                                        key={fIdx}
+                                                                                        href={file.filePath} 
+                                                                                        target="_blank" 
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors text-sm"
+                                                                                    >
+                                                                                        <TbFileSettings className="w-4 h-4" />
+                                                                                        {file.fileName}
+                                                                                    </a>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {/* Pagination */}
+                                                    {totalPages > 1 && (
+                                                        <div className="flex items-center justify-center gap-2 mt-6">
+                                                            <button
+                                                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                                disabled={currentPage === 1}
+                                                                className="px-4 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                Trước
+                                                            </button>
+                                                            
+                                                            <span className="px-4 py-2 text-sm">
+                                                                Trang {currentPage} / {totalPages}
+                                                            </span>
+                                                            
+                                                            <button
+                                                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                                                disabled={currentPage === totalPages}
+                                                                className="px-4 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                Sau
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </>
                             )}
 

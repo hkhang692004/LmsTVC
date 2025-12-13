@@ -1,13 +1,56 @@
 import { CauHoi, LuaChon, BaiKiemTra } from '../models/index.js';
 import { Op } from 'sequelize';
-import sequelize from '../config/db.js';
+import db from '../config/db.js';
 import { DatabaseError } from '../utils/errors.js';
 
+const { sequelize } = db;
+
 class QuestionRepository {
+    async generateQuestionId() {
+        const lastQuestion = await CauHoi.findOne({
+            order: [['id', 'DESC']]
+        });
+        
+        if (!lastQuestion || !lastQuestion.id || !lastQuestion.id.startsWith('CH')) {
+            return 'CH001';
+        }
+        
+        const lastNumber = parseInt(lastQuestion.id.substring(2));
+        
+        if (isNaN(lastNumber)) {
+            return 'CH001';
+        }
+        
+        const newNumber = lastNumber + 1;
+        return `CH${String(newNumber).padStart(3, '0')}`;
+    }
+
+    async generateChoiceId() {
+        const lastChoice = await LuaChon.findOne({
+            order: [['id', 'DESC']]
+        });
+        
+        if (!lastChoice || !lastChoice.id || !lastChoice.id.startsWith('LC')) {
+            return 'LC001';
+        }
+        
+        const lastNumber = parseInt(lastChoice.id.substring(2));
+        
+        if (isNaN(lastNumber)) {
+            return 'LC001';
+        }
+        
+        const newNumber = lastNumber + 1;
+        return `LC${String(newNumber).padStart(3, '0')}`;
+    }
+
     async create(examId, questionData) {
         const transaction = await sequelize.transaction();
         
         try {
+            // Generate question ID
+            const questionId = await this.generateQuestionId();
+            
             // Get next thuTu for question
             const maxThuTu = await CauHoi.max('thuTu', {
                 where: { idBaiKiemTra: examId }
@@ -15,6 +58,7 @@ class QuestionRepository {
 
             // Create question
             const question = await CauHoi.create({
+                id: questionId,
                 noiDung: questionData.noiDung,
                 diemToiDa: questionData.diemToiDa,
                 loaiCauHoi: questionData.loaiCauHoi,
@@ -24,12 +68,27 @@ class QuestionRepository {
 
             // Create choices
             if (questionData.luaChons && questionData.luaChons.length > 0) {
-                const choicesData = questionData.luaChons.map((choiceData, index) => ({
-                    noiDung: choiceData.noiDung,
-                    laDapAnDung: choiceData.laDapAnDung || false,
-                    thuTu: index + 1,
-                    idCauHoi: question.id
-                }));
+                const choicesData = [];
+                
+                // Get starting choice ID once
+                let currentChoiceId = await this.generateChoiceId();
+                
+                for (let i = 0; i < questionData.luaChons.length; i++) {
+                    const choiceData = questionData.luaChons[i];
+                    choicesData.push({
+                        id: currentChoiceId,
+                        noiDung: choiceData.noiDung,
+                        laDapAnDung: choiceData.laDapAnDung || false,
+                        thuTu: choiceData.thuTu || (i + 1),
+                        idCauHoi: question.id
+                    });
+                    
+                    // Increment ID for next choice
+                    if (i < questionData.luaChons.length - 1) {
+                        const numPart = parseInt(currentChoiceId.substring(2));
+                        currentChoiceId = `LC${String(numPart + 1).padStart(3, '0')}`;
+                    }
+                }
                 
                 await LuaChon.bulkCreate(choicesData, { transaction });
             }
@@ -58,8 +117,12 @@ class QuestionRepository {
             for (const questionData of questionsData) {
                 currentThuTu++;
                 
+                // Generate question ID
+                const questionId = await this.generateQuestionId();
+                
                 // Create question
                 const question = await CauHoi.create({
+                    id: questionId,
                     noiDung: questionData.noiDung,
                     diemToiDa: questionData.diemToiDa,
                     loaiCauHoi: questionData.loaiCauHoi,
@@ -69,12 +132,27 @@ class QuestionRepository {
 
                 // Create choices
                 if (questionData.luaChons && questionData.luaChons.length > 0) {
-                    const choicesData = questionData.luaChons.map((choiceData, index) => ({
-                        noiDung: choiceData.noiDung,
-                        laDapAnDung: choiceData.laDapAnDung || false,
-                        thuTu: index + 1,
-                        idCauHoi: question.id
-                    }));
+                    const choicesData = [];
+                    
+                    // Get starting choice ID once
+                    let currentChoiceId = await this.generateChoiceId();
+                    
+                    for (let i = 0; i < questionData.luaChons.length; i++) {
+                        const choiceData = questionData.luaChons[i];
+                        choicesData.push({
+                            id: currentChoiceId,
+                            noiDung: choiceData.noiDung,
+                            laDapAnDung: choiceData.laDapAnDung || false,
+                            thuTu: choiceData.thuTu || (i + 1),
+                            idCauHoi: question.id
+                        });
+                        
+                        // Increment ID for next choice
+                        if (i < questionData.luaChons.length - 1) {
+                            const numPart = parseInt(currentChoiceId.substring(2));
+                            currentChoiceId = `LC${String(numPart + 1).padStart(3, '0')}`;
+                        }
+                    }
                     
                     await LuaChon.bulkCreate(choicesData, { transaction });
                 }
@@ -152,13 +230,28 @@ class QuestionRepository {
                     transaction
                 });
 
-                // Create new choices
-                const choicesData = questionData.luaChons.map((choiceData, index) => ({
-                    noiDung: choiceData.noiDung,
-                    laDapAnDung: choiceData.laDapAnDung || false,
-                    thuTu: index + 1,
-                    idCauHoi: id
-                }));
+                // Create new choices with generated IDs
+                const choicesData = [];
+                
+                // Get starting choice ID once
+                let currentChoiceId = await this.generateChoiceId();
+                
+                for (let i = 0; i < questionData.luaChons.length; i++) {
+                    const choiceData = questionData.luaChons[i];
+                    choicesData.push({
+                        id: currentChoiceId,
+                        noiDung: choiceData.noiDung,
+                        laDapAnDung: choiceData.laDapAnDung || false,
+                        thuTu: i + 1,
+                        idCauHoi: id
+                    });
+                    
+                    // Increment ID for next choice
+                    if (i < questionData.luaChons.length - 1) {
+                        const numPart = parseInt(currentChoiceId.substring(2));
+                        currentChoiceId = `LC${String(numPart + 1).padStart(3, '0')}`;
+                    }
+                }
                 
                 await LuaChon.bulkCreate(choicesData, { transaction });
             }

@@ -387,7 +387,10 @@ const DoTest = () => {
 
                             <div className="p-6">
                                 <div className="bg-blue-50 p-6 rounded-lg mb-6">
-                                    <p className="text-gray-800 leading-relaxed">{question.noiDung}</p>
+                                    <div 
+                                        className="text-gray-800 leading-relaxed prose max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: question.noiDung || '' }}
+                                    />
                                 </div>
 
                                 {question.loaiCauHoi === 'nhieuDapAn' && (
@@ -415,7 +418,10 @@ const DoTest = () => {
                                                         className="mr-2 mt-1.5"
                                                     />
                                                     <span className="mr-2 font-semibold">{String.fromCharCode(97 + idx)}.</span>
-                                                    <span className="group-hover:text-blue-600">{option.noiDung}</span>
+                                                    <span 
+                                                        className="group-hover:text-blue-600"
+                                                        dangerouslySetInnerHTML={{ __html: option.noiDung || '' }}
+                                                    />
                                                 </label>
                                             );
                                         })}

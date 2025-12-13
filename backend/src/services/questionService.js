@@ -3,21 +3,37 @@ import { ValidationError, NotFoundError } from "../utils/errors.js";
 
 class QuestionService {
     async createQuestion(examId, questionData) {
-        // Validate exam exists
-        const examExists = await QuestionRepository.checkExamExists(examId);
-        if (!examExists) {
-            throw new NotFoundError('Không tìm thấy bài kiểm tra');
-        }
+        try {
+            console.log('🔍 [QuestionService] createQuestion called');
+            console.log('📋 [QuestionService] examId:', examId);
+            console.log('📋 [QuestionService] questionData:', JSON.stringify(questionData, null, 2));
+            
+            // Validate exam exists
+            const examExists = await QuestionRepository.checkExamExists(examId);
+            console.log('✅ [QuestionService] Exam exists:', examExists);
+            
+            if (!examExists) {
+                throw new NotFoundError('Không tìm thấy bài kiểm tra');
+            }
 
-        // Check if it's single or multiple questions
-        if (questionData.questions && Array.isArray(questionData.questions)) {
-            // Multiple questions
-            this.validateMultipleQuestions(questionData.questions);
-            return await QuestionRepository.createMultiple(examId, questionData.questions);
-        } else {
-            // Single question
-            this.validateSingleQuestion(questionData);
-            return await QuestionRepository.create(examId, questionData);
+            // Check if it's single or multiple questions
+            if (questionData.questions && Array.isArray(questionData.questions)) {
+                // Multiple questions
+                console.log('📚 [QuestionService] Creating multiple questions');
+                this.validateMultipleQuestions(questionData.questions);
+                return await QuestionRepository.createMultiple(examId, questionData.questions);
+            } else {
+                // Single question
+                console.log('📝 [QuestionService] Creating single question');
+                this.validateSingleQuestion(questionData);
+                const result = await QuestionRepository.create(examId, questionData);
+                console.log('✅ [QuestionService] Question created:', result?.id);
+                return result;
+            }
+        } catch (error) {
+            console.error('❌ [QuestionService] Error in createQuestion:', error);
+            console.error('❌ [QuestionService] Error stack:', error.stack);
+            throw error;
         }
     }
 

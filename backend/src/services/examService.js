@@ -2,6 +2,23 @@ import ExamRepository from "../repositories/examRepository.js";
 import { ValidationError, NotFoundError } from "../utils/errors.js";
 
 class ExamService {
+    async generateExamId() {
+        const lastExam = await ExamRepository.findLastExam();
+        
+        if (!lastExam || !lastExam.id || !lastExam.id.startsWith('BKT')) {
+            return 'BKT001';
+        }
+        
+        const lastNumber = parseInt(lastExam.id.substring(3));
+        
+        if (isNaN(lastNumber)) {
+            return 'BKT001';
+        }
+        
+        const newNumber = lastNumber + 1;
+        return `BKT${String(newNumber).padStart(3, '0')}`;
+    }
+
     async getAllExams(filters) {
         this.validateFilters(filters);
         return await ExamRepository.findWithFilters(filters);
@@ -35,7 +52,15 @@ class ExamService {
 
     async createExam(examData) {
         this.validateExamData(examData);
-        return await ExamRepository.create(examData);
+        
+        // Generate ID
+        const newId = await this.generateExamId();
+        const dataWithId = {
+            id: newId,
+            ...examData
+        };
+        
+        return await ExamRepository.create(dataWithId);
     }
 
     async updateExam(id, examData) {
@@ -61,6 +86,14 @@ class ExamService {
         const existingExam = await ExamRepository.findById(id);
         if (!existingExam) {
             throw new NotFoundError('Không tìm thấy bài kiểm tra');
+        }
+        
+        // Check if any students have submitted this exam
+        const submissionsCount = await ExamRepository.countSubmissions(id);
+        if (submissionsCount > 0) {
+            throw new ValidationError(
+                `Không thể xóa bài kiểm tra này vì đã có ${submissionsCount} học viên làm bài`
+            );
         }
         
         return await ExamRepository.delete(id);

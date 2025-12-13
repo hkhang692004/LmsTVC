@@ -8,6 +8,7 @@ import ScrollToTop from '@/components/myui/ScrollToTop';
 import MyFooter from '@/components/myui/MyFooter';
 import formatDateTime from '@/components/myui/FormatDateTime';
 import useClassStore from '@/stores/useClassStore';
+import useUserStore from '@/stores/useUserStore';
 import examService from '@/services/examService';
 import { toast } from 'sonner';
 
@@ -16,10 +17,19 @@ const TestExercise = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const selectedClass = useClassStore(state => state.selectedClass);
+    const currentUser = useUserStore(state => state.user);
+    const isTeacher = currentUser?.role === 'giangVien';
 
     const [exam, setExam] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    // For teacher view
+    const [submissions, setSubmissions] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalSubmissions, setTotalSubmissions] = useState(0);
+    const limit = 1; // Số bài làm mỗi trang
 
     // If coming from submit, replace current history entry to remove old test page
     useEffect(() => {
@@ -49,6 +59,29 @@ const TestExercise = () => {
             fetchExam();
         }
     }, [testId]);
+
+    // Fetch submissions for teacher
+    useEffect(() => {
+        const fetchSubmissions = async () => {
+            if (!isTeacher || !testId) return;
+            
+            try {
+                setLoading(true);
+                const response = await examService.getExamSubmissions(testId, currentPage, limit);
+                console.log('Exam submissions:', response.data);
+                setSubmissions(response.data?.data || []);
+                setTotalSubmissions(response.data?.pagination?.total || 0);
+                setTotalPages(response.data?.pagination?.totalPages || 1);
+            } catch (error) {
+                console.error('Error fetching exam submissions:', error);
+                toast.error('Không thể tải danh sách bài làm');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSubmissions();
+    }, [isTeacher, testId, currentPage]);
 
     const courseName = selectedClass?.tenLop || exam?.iop?.tenLop || exam?.lop?.tenLop || 'Không xác định';
     const testName = exam?.tenBaiKiemTra || exam?.tieuDe || 'Bài kiểm tra';
@@ -157,85 +190,173 @@ const TestExercise = () => {
                             <hr className="border-gray-300" />
 
                             {/* NỘI DUNG BÀI KIỂM TRA */}
-                            <div className='bg-gray-50 p-4 rounded whitespace-pre-line'>
-                                <p className="text-gray-700 text-sm">{text || "Không có nội dung."}</p>
+                            <div className='bg-gray-50 p-4 rounded'>
+                                <div 
+                                    className="text-gray-700 text-sm prose max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: text || "<p>Không có nội dung.</p>" }}
+                                />
                             </div>
 
-                            {/* NÚT LÀM BÀI TRẮC NGHIỆM — NGAY DƯỚI TEXT */}
-                            {duocLamBai && (
-                                <button
-                                    className="px-6 py-3 bg-orange-500 hover:bg-blue-500 text-white rounded-lg shadow font-semibold w-fit"
-                                    onClick={() => navigate(`/kiemtra/${testId}`)}
-                                >
-                                    {trangThai === 'dangLam' ? 'Tiếp tục bài làm' : 'Làm bài trắc nghiệm'}
-                                </button>
-                            )}
+                            {/* TEACHER VIEW - Danh sách bài làm */}
+                            {isTeacher ? (
+                                <div className="bg-white border rounded-lg shadow-sm p-6">
+                                    <h3 className="font-bold text-lg mb-4">Danh sách bài làm </h3>
+                                    
+                                    {loading ? (
+                                        <div className="text-center py-8">
+                                            <p className="text-gray-500">Đang tải...</p>
+                                        </div>
+                                    ) : submissions.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <p className="text-gray-500">Chưa có sinh viên nào làm bài</p>
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full border-collapse border border-gray-300 text-sm">
+                                                <thead>
+                                                    <tr className="bg-gray-100">
+                                                        <th className="border border-gray-300 px-4 py-2 text-left">Sinh viên</th>
+                                                        <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+                                                        <th className="border border-gray-300 px-4 py-2 text-center">Điểm</th>
+                                                        <th className="border border-gray-300 px-4 py-2 text-center">Số câu đúng</th>
+                                                        <th className="border border-gray-300 px-4 py-2 text-center">Trạng thái</th>
+                                                        <th className="border border-gray-300 px-4 py-2 text-left">Thời gian nộp</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {submissions.map((submission, index) => (
+                                                        <tr key={submission.id || index} className="hover:bg-gray-50">
+                                                            <td className="border border-gray-300 px-4 py-2">
+                                                                {submission.nguoiDung?.ten || submission.sinhVien?.ten || 'N/A'}
+                                                            </td>
+                                                            <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                                                                {submission.nguoiDung?.email || submission.sinhVien?.email || 'N/A'}
+                                                            </td>
+                                                            <td className="border border-gray-300 px-4 py-2 text-center font-semibold">
+                                                                {submission.tongDiem ? `${submission.tongDiem}/10` : 'Chưa có'}
+                                                            </td>
+                                                            <td className="border border-gray-300 px-4 py-2 text-center">
+                                                                {submission.soCauDung || 0} / {submission.tongSoCau || 0}
+                                                            </td>
+                                                            <td className="border border-gray-300 px-4 py-2 text-center">
+                                                                {submission.trangThai === 'daNop' ? (
+                                                                    <span className="text-green-600 font-semibold">Đã nộp</span>
+                                                                ) : submission.trangThai === 'dangLam' ? (
+                                                                    <span className="text-blue-600 font-semibold">Đang làm</span>
+                                                                ) : (
+                                                                    <span className="text-gray-500">Chưa làm</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="border border-gray-300 px-4 py-2">
+                                                                {submission.thoiGianNop ? formatDateTime(submission.thoiGianNop) : 'Chưa nộp'}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
 
-                            {trangThai === 'daNop' && (
-                                <div className="text-green-600 font-semibold">
-                                    ✓ Bạn đã hoàn thành bài kiểm tra này
+                                    {/* Pagination Controls */}
+                                    {!loading && totalPages > 1 && (
+                                        <div className="mt-6 flex items-center justify-between">
+                                            <button
+                                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                disabled={currentPage === 1}
+                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Trước
+                                            </button>
+                                            <span className="text-sm text-gray-600">
+                                                Trang {currentPage} / {totalPages}
+                                            </span>
+                                            <button
+                                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Sau
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            ) : (
+                                <>
+                                    {/* STUDENT VIEW - NÚT LÀM BÀI TRẮC NGHIỆM */}
+                                    {duocLamBai && (
+                                        <button
+                                            className="px-6 py-3 bg-orange-500 hover:bg-blue-500 text-white rounded-lg shadow font-semibold w-fit"
+                                            onClick={() => navigate(`/kiemtra/${testId}`)}
+                                        >
+                                            {trangThai === 'dangLam' ? 'Tiếp tục bài làm' : 'Làm bài trắc nghiệm'}
+                                        </button>
+                                    )}
 
-                            {/* BẢNG TRẠNG THÁI */}
-                            <div className="mt-6 p-5 bg-white border rounded-lg shadow-sm max-w-md">
-                                <h3 className="font-bold text-lg mb-3">Trạng thái bài kiểm tra</h3>
+                                    {trangThai === 'daNop' && (
+                                        <div className="text-green-600 font-semibold">
+                                            ✓ Bạn đã hoàn thành bài kiểm tra này
+                                        </div>
+                                    )}
 
-                                <table className="w-full border-collapse border border-gray-300 text-sm">
-                                    <tbody>
+                                    {/* BẢNG TRẠNG THÁI */}
+                                    <div className="mt-6 p-5 bg-white border rounded-lg shadow-sm max-w-md">
+                                        <h3 className="font-bold text-lg mb-3">Trạng thái bài kiểm tra</h3>
 
-                                        {/* Row Trạng thái */}
-                                        <tr className="border-b border-gray-300">
-                                            <td className="w-1/3 border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                Trạng thái
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {trangThai === 'daNop' ? (
-                                                    <span className="text-green-600 font-semibold">Đã hoàn thành</span>
-                                                ) : trangThai === 'dangLam' ? (
-                                                    <span className="text-blue-600 font-semibold">Đang làm</span>
-                                                ) : (
-                                                    <span className="text-red-500 font-semibold">Chưa làm</span>
-                                                )}
-                                            </td>
-                                        </tr>
+                                        <table className="w-full border-collapse border border-gray-300 text-sm">
+                                            <tbody>
 
-                                        {/* Row Thời lượng */}
-                                        <tr className="border-b border-gray-300">
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                Thời lượng
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {thoiLuong} phút
-                                            </td>
-                                        </tr>
+                                                {/* Row Trạng thái */}
+                                                <tr className="border-b border-gray-300">
+                                                    <td className="w-1/3 border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Trạng thái
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {trangThai === 'daNop' ? (
+                                                            <span className="text-green-600 font-semibold">Đã hoàn thành</span>
+                                                        ) : trangThai === 'dangLam' ? (
+                                                            <span className="text-blue-600 font-semibold">Đang làm</span>
+                                                        ) : (
+                                                            <span className="text-red-500 font-semibold">Chưa làm</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
 
-                                        {/* Row Thời gian còn lại */}
-                                        <tr className="border-b border-gray-300">
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                Thời gian còn lại
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {trangThai === 'daNop' ? (
-                                                    <span className="text-green-600 font-semibold">Hoàn thành</span>
-                                                ) : (
-                                                    timeLeft
-                                                )}
-                                            </td>
-                                        </tr>
+                                                {/* Row Thời lượng */}
+                                                <tr className="border-b border-gray-300">
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Thời lượng
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {thoiLuong} phút
+                                                    </td>
+                                                </tr>
 
-                                        {/* Row Điểm */}
-                                        <tr>
-                                            <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
-                                                Điểm
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                {trangThai === 'daNop' ? (
-                                                    choPhepXemDiem ? (
-                                                        tongDiem ? `${tongDiem}/10` : "Chưa có điểm"
-                                                    ) : (
-                                                        <span className="text-gray-600 font-semibold">Không có quyền xem điểm</span>
-                                                    )
+                                                {/* Row Thời gian còn lại */}
+                                                <tr className="border-b border-gray-300">
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Thời gian còn lại
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {trangThai === 'daNop' ? (
+                                                            <span className="text-green-600 font-semibold">Hoàn thành</span>
+                                                        ) : (
+                                                            timeLeft
+                                                        )}
+                                                    </td>
+                                                </tr>
+
+                                                {/* Row Điểm */}
+                                                <tr>
+                                                    <td className="border-r border-gray-300 font-semibold px-4 py-2 bg-gray-100">
+                                                        Điểm
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        {trangThai === 'daNop' ? (
+                                                            choPhepXemDiem ? (
+                                                                tongDiem ? `${tongDiem}/10` : "Chưa có điểm"
+                                                            ) : (
+                                                                <span className="text-gray-600 font-semibold">Không có quyền xem điểm</span>
+                                                            )
                                                 ) : (
                                                     "Chưa có điểm"
                                                 )}
@@ -245,6 +366,8 @@ const TestExercise = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        </>
+                    )}
 
                         </div>
                     </div>

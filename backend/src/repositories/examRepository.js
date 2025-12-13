@@ -1,8 +1,29 @@
 import { BaiKiemTra, CauHoi, LuaChon, BaiLam, BaiLamCauHoi, LuaChonDaChon, Lop, NguoiDung } from '../models/index.js';
 import { Op } from 'sequelize';
 import { DatabaseError } from '../utils/errors.js';
+import db from '../config/db.js';
+const { sequelize } = db;
 
 class ExamRepository {
+    async findLastExam() {
+        try {
+            const lastExam = await BaiKiemTra.findOne({
+                where: {
+                    id: {
+                        [Op.like]: 'BKT%'
+                    }
+                },
+                order: [['id', 'DESC']],
+                attributes: ['id']
+            });
+            
+            return lastExam;
+        } catch (error) {
+            console.error('Database error in findLastExam:', error);
+            throw new DatabaseError('Lỗi khi tìm bài kiểm tra cuối cùng');
+        }
+    }
+
     async findWithFilters(filters) {
         const { lopId, userRole, page = 1, limit = 20 } = filters;
         
@@ -52,7 +73,7 @@ class ExamRepository {
     async findById(id) {
         try {
             const baiKiemTra = await BaiKiemTra.findByPk(id, {
-                attributes: ['id', 'tieuDe', 'moTa', 'thoiGianBatDau', 'thoiGianKetThuc', 'thoiLuong', 'tongDiem', 'status', 'choPhepXemDiem'],
+                attributes: ['id', 'tieuDe', 'moTa', 'thoiGianBatDau', 'thoiGianKetThuc', 'thoiLuong', 'tongDiem', 'idLop', 'status', 'choPhepXemDiem'],
                 include: [{
                     model: Lop,
                     as: 'lop',
@@ -130,15 +151,58 @@ class ExamRepository {
     }
 
     async delete(id) {
+        const transaction = await sequelize.transaction();
+        
         try {
-            const result = await BaiKiemTra.destroy({
-                where: { id }
+            // First, get all questions for this exam
+            const questions = await CauHoi.findAll({
+                where: { idBaiKiemTra: id },
+                attributes: ['id'],
+                transaction
             });
 
+            const questionIds = questions.map(q => q.id);
+
+            if (questionIds.length > 0) {
+                // Delete all LuaChon (choices) for these questions
+                await LuaChon.destroy({
+                    where: { idCauHoi: { [Op.in]: questionIds } },
+                    transaction
+                });
+
+                // Delete all CauHoi (questions)
+                await CauHoi.destroy({
+                    where: { id: { [Op.in]: questionIds } },
+                    transaction
+                });
+            }
+
+            // Finally, delete the exam itself
+            // Note: BaiLam should not exist here because validation prevents deletion if there are submissions
+            const result = await BaiKiemTra.destroy({
+                where: { id },
+                transaction
+            });
+
+            await transaction.commit();
             return result > 0;
         } catch (error) {
+            await transaction.rollback();
             console.error('Database error in delete:', error);
             throw new DatabaseError('Lỗi khi xóa bài kiểm tra');
+        }
+    }
+
+    // Count submissions for an exam
+    async countSubmissions(examId) {
+        try {
+            const count = await BaiLam.count({
+                where: { idBaiKiemTra: examId }
+            });
+            return count;
+        } catch (error) {
+            console.error('Database error in countSubmissions:', error);
+            throw new DatabaseError('Lỗi khi đếm bài làm');
         }
     }
 
@@ -248,31 +312,68 @@ class ExamRepository {
         const offset = (page - 1) * limit;
 
         try {
+            // Get total questions count for this exam
+            const totalQuestions = await CauHoi.count({
+                where: { idBaiKiemTra: examId }
+            });
+
             const { count, rows } = await BaiLam.findAndCountAll({
                 where: whereConditions,
                 attributes: ['id', 'thoiGianBatDau', 'thoiGianNop', 'tongDiem'],
-                include: [{
-                    model: NguoiDung,
-                    as: 'sinhVien',
-                    attributes: ['id', 'ten', 'email']
-                }],
+                include: [
+                    {
+                        model: NguoiDung,
+                        as: 'sinhVien',
+                        attributes: ['id', 'ten', 'email']
+                    },
+                    {
+                        model: BaiLamCauHoi,
+                        as: 'cauHoiDaLam',
+                        attributes: ['id', 'idCauHoi'],
+                        required: false,
+                        include: [{
+                            model: LuaChon,
+                            as: 'luaChonDaChons',
+                            attributes: ['id', 'laDapAnDung'],
+                            through: { attributes: [] },
+                            required: false
+                        }]
+                    }
+                ],
+                distinct: true,
                 limit: limit,
                 offset: offset,
                 order: [['thoiGianBatDau', 'DESC']]
             });
 
-            const mappedSubmissions = rows.map(submission => ({
-                id: submission.id,
-                thoiGianBatDau: submission.thoiGianBatDau,
-                thoiGianNop: submission.thoiGianNop,
-                tongDiem: submission.tongDiem,
-                trangThai: submission.thoiGianNop ? 'daNop' : 'dangLam',
-                sinhVien: {
-                    id: submission.sinhVien.id,
-                    ten: submission.sinhVien.ten,
-                    email: submission.sinhVien.email
+            const mappedSubmissions = rows.map(submission => {
+                // Calculate correct answers count
+                let soCauDung = 0;
+                if (submission.cauHoiDaLam && submission.cauHoiDaLam.length > 0) {
+                    for (const answer of submission.cauHoiDaLam) {
+                        if (answer.luaChonDaChons && answer.luaChonDaChons.length > 0) {
+                            // Check if any selected choice is correct
+                            const hasCorrect = answer.luaChonDaChons.some(choice => choice.laDapAnDung);
+                            if (hasCorrect) soCauDung++;
+                        }
+                    }
                 }
-            }));
+
+                return {
+                    id: submission.id,
+                    thoiGianBatDau: submission.thoiGianBatDau,
+                    thoiGianNop: submission.thoiGianNop,
+                    tongDiem: submission.tongDiem,
+                    soCauDung: soCauDung,
+                    tongSoCau: totalQuestions,
+                    trangThai: submission.thoiGianNop ? 'daNop' : 'dangLam',
+                    sinhVien: {
+                        id: submission.sinhVien.id,
+                        ten: submission.sinhVien.ten,
+                        email: submission.sinhVien.email
+                    }
+                };
+            });
 
             return {
                 submissions: mappedSubmissions,
@@ -298,6 +399,7 @@ class ExamRepository {
             hanNop: baiKiemTraRecord.thoiGianKetThuc,
             thoiLuong: baiKiemTraRecord.thoiLuong,
             tongDiem: baiKiemTraRecord.tongDiem,
+            idLop: baiKiemTraRecord.idLop,
             loaiKiemTra: baiKiemTraRecord.status,
             status: baiKiemTraRecord.status,
             choPhepXemDiem: baiKiemTraRecord.choPhepXemDiem,

@@ -15,6 +15,7 @@ import TestExercise from './pages/student/TestExercise'
 import DoTest from './pages/student/DoTest'
 import Profile from './pages/student/Profile'
 import StartPage from './pages/main/StartPage'
+import ManageExam from './pages/instructor/ManageExam'
 
 function App() {
 
@@ -45,6 +46,7 @@ function App() {
           <Route path='/test/:id' element={<TestExercise />} />
           <Route path='/kiemtra/:id' element={<DoTest />} />
           <Route path='/profile' element={<Profile />} />
+          <Route path='/manage-exam/:examId' element={<ManageExam />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
-import React from "react";
-import { FileText, Folder, Play } from "lucide-react";
+import React, { useState } from "react";
+import { FileText, Folder, Play, Pencil, Trash2 } from "lucide-react";
 import { BsFiletypePdf } from "react-icons/bs";
 import { FiFileText } from "react-icons/fi";
 import { MdUploadFile, MdOutlineChat } from "react-icons/md";
@@ -9,6 +9,10 @@ import { FaFilePen } from "react-icons/fa6";
 import { PiMicrosoftWordLogoFill } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import useClassStore from "@/stores/useClassStore";
+import useUserStore from "@/stores/useUserStore";
+import { Button } from "@/components/ui/button";
+import { toast } from 'sonner';
+import axiosClient from '@/lib/axios';
 
 // Constants
 const CONTENT_TYPES = {
@@ -106,14 +110,51 @@ const shouldDisplay = (item) => {
 };
 
 
-const ContentItem = ({ item }) => {
+const ContentItem = ({ item, onRefresh }) => {
     const setSelectedContent = useClassStore(state => state.setSelectedContent);
+    const userRole = useUserStore(state => state.user?.role);
+    const isTeacher = userRole === 'giangVien';
     const navigate = useNavigate();
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [newTitle, setNewTitle] = useState(item.tieuDe);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     
     // Kiểm tra xem item có được hiển thị hay không
     if (!shouldDisplay(item)) {
         return null;
     }
+
+    // Update content title
+    const handleUpdateTitle = async () => {
+        if (!newTitle.trim()) {
+            toast.error('Tiêu đề không được để trống');
+            return;
+        }
+        
+        try {
+            await axiosClient.put(`/api/content/${item.id}`, { tieuDe: newTitle.trim() });
+            toast.success('Cập nhật tiêu đề thành công');
+            setEditingTitle(false);
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            console.error('Error updating content:', error);
+            toast.error('Không thể cập nhật tiêu đề');
+        }
+    };
+
+    // Delete content
+    const handleDeleteContent = async () => {
+        try {
+            await axiosClient.delete(`/api/content/${item.id}`);
+            toast.success('Xóa nội dung thành công');
+            setDeleteDialogOpen(false);
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            console.error('Error deleting content:', error);
+            const message = error.response?.data?.message || 'Không thể xóa nội dung';
+            toast.error(message);
+        }
+    };
 
     const fileDetail = item.files && item.files.length > 0 ? item.files[0] : null;
     const loaiChiTiet = fileDetail?.loaiChiTiet;
@@ -181,45 +222,210 @@ const ContentItem = ({ item }) => {
     // Render video YouTube inline
     if (youtubeVideoId) {
         return (
-            <div id={`content-item-${item.id}`} className="py-6 px-6 border-t">
-                <h2 className="text-sm text-blue-500 font-medium mb-4">
-                    {item.tieuDe}
-                </h2>
-                <div className="w-full bg-black rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%', position: 'relative', height: 0 }}>
-                    <iframe
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%'
-                        }}
-                        src={`https://www.youtube.com/embed/${youtubeVideoId}`}
-                        title={item.tieuDe}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    />
+            <>
+                <div id={`content-item-${item.id}`} className="py-6 px-6 border-t">
+                    <div className="flex items-center justify-between mb-4">
+                        {editingTitle ? (
+                            <div className="flex items-center gap-2 flex-1">
+                                <input
+                                    type="text"
+                                    value={newTitle}
+                                    onChange={(e) => setNewTitle(e.target.value)}
+                                    className="text-sm font-medium border-b-2 border-orange-500 outline-none px-2 flex-1"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleUpdateTitle();
+                                        if (e.key === 'Escape') {
+                                            setEditingTitle(false);
+                                            setNewTitle(item.tieuDe);
+                                        }
+                                    }}
+                                    autoFocus
+                                />
+                                <Button size="sm" onClick={handleUpdateTitle}>Lưu</Button>
+                                <Button size="sm" variant="outline" onClick={() => {
+                                    setEditingTitle(false);
+                                    setNewTitle(item.tieuDe);
+                                }}>Hủy</Button>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-sm text-blue-500 font-medium">
+                                    {item.tieuDe}
+                                </h2>
+                                {isTeacher && (
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingTitle(true);
+                                            }}
+                                            className="h-7 w-7 p-0"
+                                        >
+                                            <Pencil className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteDialogOpen(true);
+                                            }}
+                                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                    <div className="w-full bg-black rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%', position: 'relative', height: 0 }}>
+                        <iframe
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%'
+                            }}
+                            src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                            title={item.tieuDe}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
+                    </div>
                 </div>
-            </div>
+                {deleteDialogOpen && (
+                    <DeleteConfirmationDialog
+                        item={item}
+                        onConfirm={handleDeleteContent}
+                        onCancel={() => setDeleteDialogOpen(false)}
+                    />
+                )}
+            </>
         );
     }
 
     // Render content item thông thường
     return (
-        <div
-            onClick={handleClick}
-            className="flex items-center py-6 px-6 hover:bg-gray-50 cursor-pointer border-t"
-        >
-            {getIcon(item.loaiNoiDung, loaiChiTiet, fileType)}
+        <>
+            <div
+                className="flex items-center justify-between py-6 px-6 hover:bg-gray-50 border-t group"
+            >
+                <div onClick={handleClick} className="flex items-center flex-1 cursor-pointer">
+                    {getIcon(item.loaiNoiDung, loaiChiTiet, fileType)}
 
-            <h2 className="ml-3 text-sm text-blue-500 font-medium hover:underline">
-                {item.tieuDe}
-            </h2>
+                    {editingTitle ? (
+                        <div className="flex items-center gap-2 flex-1 ml-3">
+                            <input
+                                type="text"
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                                className="text-sm font-medium border-b-2 border-orange-500 outline-none px-2 flex-1"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateTitle();
+                                    if (e.key === 'Escape') {
+                                        setEditingTitle(false);
+                                        setNewTitle(item.tieuDe);
+                                    }
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                autoFocus
+                            />
+                            <Button size="sm" onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateTitle();
+                            }}>Lưu</Button>
+                            <Button size="sm" variant="outline" onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTitle(false);
+                                setNewTitle(item.tieuDe);
+                            }}>Hủy</Button>
+                        </div>
+                    ) : (
+                        <>
+                            <h2 className="ml-3 text-sm text-blue-500 font-medium hover:underline">
+                                {item.tieuDe}
+                            </h2>
 
-            {item.loaiNoiDung === CONTENT_TYPES.TAI_LIEU && fileType && (
-                <span className="ml-2 text-gray-400 text-sm">{fileType.toUpperCase()}</span>
+                            {item.loaiNoiDung === CONTENT_TYPES.TAI_LIEU && fileType && (
+                                <span className="ml-2 text-gray-400 text-sm">{fileType.toUpperCase()}</span>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {isTeacher && !editingTitle && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTitle(true);
+                            }}
+                            className="h-7 w-7 p-0"
+                        >
+                            <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteDialogOpen(true);
+                            }}
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                            <Trash2 className="w-3 h-3" />
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            {deleteDialogOpen && (
+                <DeleteConfirmationDialog
+                    item={item}
+                    onConfirm={handleDeleteContent}
+                    onCancel={() => setDeleteDialogOpen(false)}
+                />
             )}
+        </>
+    );
+};
+
+// Delete Confirmation Dialog Component
+const DeleteConfirmationDialog = ({ item, onConfirm, onCancel }) => {
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">Xác nhận xóa nội dung</h3>
+                <p className="text-gray-600 mb-2">
+                    Bạn có chắc chắn muốn xóa nội dung <strong>{item.tieuDe}</strong>?
+                </p>
+                <p className="text-sm text-red-600 mb-6">
+                    Chỉ có thể xóa khi:
+                </p>
+                <ul className="text-sm text-gray-600 mb-6 list-disc list-inside space-y-1">
+                    <li>Không có nội dung con</li>
+                    <li>Không có sinh viên nộp bài tập</li>
+                    <li>Không có sinh viên làm kiểm tra</li>
+                </ul>
+                <p className="text-sm text-red-600 mb-6 font-semibold">
+                    Hành động này không thể hoàn tác.
+                </p>
+                <div className="flex justify-end gap-3">
+                    <Button onClick={onCancel} variant="outline">
+                        Hủy
+                    </Button>
+                    <Button onClick={onConfirm} className="bg-red-600 hover:bg-red-700">
+                        Xóa
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 };

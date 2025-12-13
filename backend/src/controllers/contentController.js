@@ -55,6 +55,21 @@ class ContentController {
         ResponseUtil.success(res, submissions, 'Lấy danh sách bài nộp thành công');
     });
 
+    // GET /api/content/:id/all-submissions - Get all submissions for assignment (teacher)
+    getAllSubmissions = asyncHandler(async (req, res) => {
+        const { id: assignmentId } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return ResponseUtil.error(res, 'Bạn cần đăng nhập', 401);
+        }
+
+        const result = await ContentService.getAllSubmissions(assignmentId, parseInt(page), parseInt(limit));
+
+        ResponseUtil.success(res, result, 'Lấy danh sách tất cả bài nộp thành công');
+    });
+
     // POST /api/content
     createContent = asyncHandler(async (req, res) => {
         console.log('[ContentController] createContent called');
@@ -70,7 +85,9 @@ class ContentController {
             noiDung: req.body.noiDung,
             loaiNoiDung: req.body.loaiNoiDung,
             hanNop: req.body.hanNop,
-            status: req.body.status
+            status: req.body.status,
+            videoUrl: req.body.videoUrl, // Youtube URL if provided
+            linkUrl: req.body.linkUrl // External link URL if provided
         };
 
         const files = req.files || [];

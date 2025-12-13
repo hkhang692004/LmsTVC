@@ -415,6 +415,12 @@ class ClassRepository {
                             required: true
                         },
                         {
+                            model: NguoiDung,
+                            as: 'giangVien',
+                            attributes: ['id', 'ten', 'email'],
+                            required: true
+                        },
+                        {
                             model: MonHoc,
                             as: 'monHoc',
                             attributes: ['id', 'tenMon'],

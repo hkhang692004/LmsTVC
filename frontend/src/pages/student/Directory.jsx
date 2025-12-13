@@ -4,16 +4,19 @@ import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
 import MyHeader from '@/components/myui/MyHeader'
 import MyFooter from '@/components/myui/MyFooter'
 import ScrollToTop from '@/components/myui/ScrollToTop'
+import AddDocumentDialog from '@/components/myui/AddDocumentDialog'
+import { Button } from '@/components/ui/button'
 import { GoFileDirectory } from "react-icons/go";
 import { HiChevronDown } from 'react-icons/hi'
 import Breadcrumb from '@/components/myui/Breadcrump'
 import { useParams } from 'react-router-dom'
-import { FaFile, FaDownload } from "react-icons/fa";
+import { FaFile, FaDownload, FaPlus, FaTrash } from "react-icons/fa";
 import { FaFileCircleQuestion } from "react-icons/fa6";
 import { FiFileText } from 'react-icons/fi'
 import { PiMicrosoftWordLogoFill } from 'react-icons/pi'
 import { BsFiletypePdf } from 'react-icons/bs'
 import useClassStore from '@/stores/useClassStore';
+import useUserStore from '@/stores/useUserStore';
 import axiosClient from '@/lib/axios';
 import { toast } from 'sonner';
 
@@ -55,6 +58,8 @@ const Directory = () => {
   const { id: folderId } = useParams();
   const selectedClass = useClassStore(state => state.selectedClass);
   const selectedContent = useClassStore(state => state.selectedContent);
+  const userRole = useUserStore(state => state.user?.role);
+  const isTeacher = userRole === 'giangVien';
   
   const folderName = selectedContent?.ten || 'Thư mục';
   const courseName = selectedClass?.tenLop || 'Không xác định';
@@ -66,35 +71,39 @@ const Directory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
 
   // Fetch folder data và files từ API
-  useEffect(() => {
-    if (folderId) {
-      const fetchFolderData = async () => {
-        try {
-          setLoading(true);
-          
-          // Lấy thông tin folder
-          const folderResponse = await axiosClient.get(`/api/content/${folderId}`);
-          const folderData = folderResponse.data?.data;
-          setFolder(folderData);
-          
-          // Lấy các files trong folder (children của folder này có loaiNoiDung = 'taiLieu')
-          const filesResponse = await axiosClient.get(`/api/content/${folderId}/files`);
-          const filesData = filesResponse.data?.data || [];
-          setFiles(filesData);
-          
-          setError(null);
-        } catch (err) {
-          console.error('Error fetching folder data:', err);
-          setError('Không thể tải dữ liệu thư mục');
-          setFiles([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchFolderData();
+  const fetchFolderData = async () => {
+    if (!folderId) return;
+    
+    try {
+      setLoading(true);
+      
+      // Lấy thông tin folder
+      const folderResponse = await axiosClient.get(`/api/content/${folderId}`);
+      const folderData = folderResponse.data?.data;
+      setFolder(folderData);
+      
+      // Lấy các files trong folder (children của folder này có loaiNoiDung = 'taiLieu')
+      const filesResponse = await axiosClient.get(`/api/content/${folderId}/files`);
+      const filesData = filesResponse.data?.data || [];
+      setFiles(filesData);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching folder data:', err);
+      setError('Không thể tải dữ liệu thư mục');
+      setFiles([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchFolderData();
   }, [folderId]);
 
   // Download single file
@@ -141,6 +150,28 @@ const Directory = () => {
     }
   };
 
+  // Delete file
+  const handleDeleteFile = async () => {
+    if (!fileToDelete) return;
+
+    try {
+      await axiosClient.delete(`/api/content/${fileToDelete.id}`);
+      toast.success('Xóa file thành công');
+      setDeleteDialogOpen(false);
+      setFileToDelete(null);
+      // Refresh file list
+      fetchFolderData();
+    } catch (err) {
+      console.error('Error deleting file:', err);
+      toast.error('Không thể xóa file');
+    }
+  };
+
+  const confirmDelete = (file) => {
+    setFileToDelete(file);
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <>
       <MyHeader />
@@ -163,6 +194,16 @@ const Directory = () => {
                 <h2 className="text-orange-500 font-bold text-2xl lg:text-4xl">
                   {folder?.tieuDe || folderName}
                 </h2>
+                {isTeacher && (
+                  <Button
+                    onClick={() => setAddDocumentOpen(true)}
+                    className="ml-auto bg-orange-500 hover:bg-orange-600"
+                    size="sm"
+                  >
+                    <FaPlus className="w-4 h-4 mr-2" />
+                    Thêm tài liệu
+                  </Button>
+                )}
               </div>
 
               {/* Description if exists */}
@@ -213,10 +254,12 @@ const Directory = () => {
                           <span className="absolute left-4 top-6.5 w-5 border-t-2 border-dotted border-gray-400"></span>
 
                           <div 
-                            onClick={() => file.chiTiets && file.chiTiets.length > 0 && handleDownloadFile(file.chiTiets[0].id, file.chiTiets[0].fileName)}
-                            className="flex items-center justify-between group hover:bg-blue-50 p-2 rounded-md cursor-pointer transition-colors"
+                            className="flex items-center justify-between group hover:bg-blue-50 p-2 rounded-md transition-colors"
                           >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div 
+                              onClick={() => file.chiTiets && file.chiTiets.length > 0 && handleDownloadFile(file.chiTiets[0].id, file.chiTiets[0].fileName)}
+                              className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
+                            >
                               {file.chiTiets && file.chiTiets.length > 0 && getIconByMimeType(file.chiTiets[0].fileType, file.chiTiets[0].fileName)}
                               <div className="flex flex-col flex-1 min-w-0">
                                 <span className="text-sm font-medium text-gray-800 truncate">
@@ -230,10 +273,21 @@ const Directory = () => {
                               </div>
                             </div>
 
-                            {/* Download icon */}
-                            {file.chiTiets && file.chiTiets.length > 0 && (
-                              <FaDownload className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            )}
+                            {/* Action icons */}
+                            <div className="flex items-center gap-2">
+                              {file.chiTiets && file.chiTiets.length > 0 && (
+                                <FaDownload className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" />
+                              )}
+                              {isTeacher && (
+                                <FaTrash 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    confirmDelete(file);
+                                  }}
+                                  className="w-4 h-4 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-red-700" 
+                                />
+                              )}
+                            </div>
                           </div>
                         </li>
                       ))
@@ -259,6 +313,51 @@ const Directory = () => {
 
       <ScrollToTop />
       <MyFooter />
+      
+      {/* Add Document Dialog */}
+      {isTeacher && folder && (
+        <AddDocumentDialog
+          open={addDocumentOpen}
+          onOpenChange={setAddDocumentOpen}
+          topicId={folder.idChuDe}
+          parentId={folderId}
+          onSuccess={() => {
+            fetchFolderData();
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800">Xác nhận xóa file</h3>
+            <p className="text-gray-600 mb-4">
+              Bạn có chắc chắn muốn xóa file <strong>{fileToDelete?.chiTiets?.[0]?.fileName || fileToDelete?.tieuDe}</strong>?
+            </p>
+            <p className="text-sm text-red-600 mb-6">
+              Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setFileToDelete(null);
+                }}
+                variant="outline"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleDeleteFile}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

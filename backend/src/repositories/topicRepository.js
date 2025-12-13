@@ -6,6 +6,19 @@ const { sequelize, Sequelize } = db;
 
 class TopicRepository {
 
+    // Find last topic to generate new ID
+    async findLastTopic() {
+        try {
+            return await ChuDe.findOne({
+                order: [['id', 'DESC']],
+                attributes: ['id']
+            });
+        } catch (error) {
+            console.error('Database error in findLastTopic:', error);
+            throw new DatabaseError('Lỗi khi tìm chủ đề cuối cùng');
+        }
+    }
+
     // Find topic by ID with root level contents (idNoiDungCha = null)
     async findByIdWithContents(topicId) {
         try {
@@ -155,6 +168,66 @@ class TopicRepository {
             await transaction.rollback();
             console.error('Database error in delete:', error);
             throw new DatabaseError('Lỗi khi xóa chủ đề');
+        }
+    }
+
+    // Count contents in a topic
+    async countContents(topicId) {
+        try {
+            return await NoiDung.count({
+                where: { idChuDe: topicId }
+            });
+        } catch (error) {
+            console.error('Error counting topic contents:', error);
+            throw new DatabaseError('Lỗi khi đếm nội dung');
+        }
+    }
+
+    // Check if topic has any submissions or exam submissions
+    async checkTopicSubmissions(topicId) {
+        try {
+            // Get all content IDs in this topic
+            const contents = await NoiDung.findAll({
+                where: { idChuDe: topicId },
+                attributes: ['id', 'loaiNoiDung', 'idBaiKiemTra']
+            });
+
+            if (contents.length === 0) {
+                return { hasSubmissions: false, submissionsCount: 0 };
+            }
+
+            let totalSubmissions = 0;
+
+            // Check each content for submissions
+            for (const content of contents) {
+                // Check assignment submissions (baiTap type)
+                if (content.loaiNoiDung === 'baiTap') {
+                    const submissionsCount = await NoiDung.count({
+                        where: { 
+                            idNoiDungCha: content.id,
+                            loaiNoiDung: 'baiNop'
+                        }
+                    });
+                    totalSubmissions += submissionsCount;
+                }
+
+                // Check exam submissions (baiNop type with idBaiKiemTra)
+                if (content.loaiNoiDung === 'baiNop' && content.idBaiKiemTra) {
+                    const { BaiLam } = await import('../models/index.js');
+                    const examSubmissionsCount = await BaiLam.count({
+                        where: { idBaiKiemTra: content.idBaiKiemTra }
+                    });
+                    totalSubmissions += examSubmissionsCount;
+                }
+            }
+
+            return {
+                hasSubmissions: totalSubmissions > 0,
+                submissionsCount: totalSubmissions
+            };
+        } catch (error) {
+            console.error('Error checking topic submissions:', error);
+            throw new DatabaseError('Lỗi khi kiểm tra bài nộp');
         }
     }
 }

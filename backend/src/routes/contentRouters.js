@@ -16,6 +16,8 @@ router.get("/:id/comments", ContentController.getCommentsByContentId);
 router.get("/:id/files", ContentController.getFolderFiles);
 // GET /api/content/:id/submissions - Lấy bài nộp của tôi cho bài tập (student)
 router.get("/:id/submissions", checkLogin, ContentController.getMySubmissions);
+// GET /api/content/:id/all-submissions - Lấy tất cả bài nộp cho bài tập (teacher)
+router.get("/:id/all-submissions", checkLogin, ContentController.getAllSubmissions);
 // GET /api/content/:id/assignment-view - Lấy bài tập + bài nộp của tôi (student view)
 router.get("/:id/assignment-view", ContentController.getAssignmentView);
 // GET /api/content/files/:fileId/download - Download file with correct filename

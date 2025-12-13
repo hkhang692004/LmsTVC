@@ -14,6 +14,13 @@ const examService = {
     // Get exam basic info
     getExamById: (examId) => {
         return axiosClient.get(`/api/exams/${examId}`);
+    },
+
+    // Get exam submissions (teacher only) with pagination
+    getExamSubmissions: (examId, page = 1, limit = 10) => {
+        return axiosClient.get(`/api/exams/${examId}/submissions`, {
+            params: { page, limit }
+        });
     }
 };
 

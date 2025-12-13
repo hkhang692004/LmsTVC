@@ -9,6 +9,7 @@ import useUserStore from '@/stores/useUserStore'
 
 const MyCoursePage = () => {
     const userName = useUserStore(state => state.user?.ten);
+    const userRole = useUserStore(state => state.user?.role);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('classname');
 
@@ -28,7 +29,9 @@ const MyCoursePage = () => {
                 <div className='w-full space-y-6 px-10'>
                     <div className="flex flex-col my-20 space-y-6 ">
                         <div>
-                            <h2 className="text-orange-500 font-bold text-4xl">Hello, {userName}</h2>
+                            <h2 className="text-orange-500 font-bold text-4xl">
+                                {userRole === 'giangVien' ? `Giảng viên ${userName}` : `Hello, ${userName}`}
+                            </h2>
                         </div>
                         <div className='w-full '>
                             <div className='border border-gray-300 p-4 '>

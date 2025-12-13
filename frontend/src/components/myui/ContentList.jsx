@@ -2,7 +2,7 @@ import React from "react";
 import ContentSection from "./ContentSection";
 import ExamSection from "./ExamSection";
 
-const ContentList = ({ myClass }) => {
+const ContentList = ({ myClass, isTeacher, onRefresh }) => {
     const chuDes = myClass?.chuDes || [];
     const classId = myClass?.id;
 
@@ -18,11 +18,14 @@ const ContentList = ({ myClass }) => {
                     key={chuDe.id}
                     title={chuDe.tenChuDe}
                     items={chuDe.noiDungs || []}
+                    isTeacher={isTeacher}
+                    topicId={chuDe.id}
+                    onContentAdded={onRefresh}
                 />
             ))}
 
             {/* Section Bài kiểm tra riêng */}
-            {classId && <ExamSection classId={classId} />}
+            {classId && <ExamSection classId={classId} isTeacher={isTeacher} />}
         </div>
     );
 };

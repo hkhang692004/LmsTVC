@@ -6,6 +6,17 @@ import {
 
 class TopicService {
     
+    // Generate unique ID for topic (CD001, CD002, etc.)
+    async generateTopicId() {
+        const lastTopic = await TopicRepository.findLastTopic();
+        if (!lastTopic || !lastTopic.id) {
+            return 'CD001';
+        }
+        const lastNumber = parseInt(lastTopic.id.replace('CD', ''));
+        const newNumber = String(lastNumber + 1).padStart(3, '0');
+        return `CD${newNumber}`;
+    }
+
     // Get topic by ID with root level contents
     async getTopicById(topicId) {
         if (!topicId) {
@@ -32,7 +43,11 @@ class TopicService {
             throw new ValidationError('ID lớp học là bắt buộc');
         }
 
+        // Generate unique ID
+        const newId = await this.generateTopicId();
+
         const newTopicData = {
+            id: newId,
             tenChuDe: topicData.tenChuDe,
             idLop: topicData.idLop,
             moTa: topicData.moTa || null
@@ -74,8 +89,26 @@ class TopicService {
             throw new NotFoundError('Không tìm thấy chủ đề để xóa');
         }
 
+        // Validate deletion conditions
+        await this.validateTopicDeletion(topicId);
+
         await TopicRepository.delete(topicId);
         return { message: 'Xóa chủ đề thành công' };
+    }
+
+    // Validate if topic can be deleted
+    async validateTopicDeletion(topicId) {
+        // Check if topic has any contents
+        const contentsCount = await TopicRepository.countContents(topicId);
+        if (contentsCount > 0) {
+            throw new ValidationError(`Không thể xóa vì chủ đề có ${contentsCount} nội dung`);
+        }
+
+        // Additional check: count submissions and exam submissions for all contents in this topic
+        const { hasSubmissions, submissionsCount } = await TopicRepository.checkTopicSubmissions(topicId);
+        if (hasSubmissions) {
+            throw new ValidationError(`Không thể xóa vì đã có ${submissionsCount} bài nộp/làm kiểm tra`);
+        }
     }
 
 

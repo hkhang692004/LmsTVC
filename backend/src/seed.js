@@ -125,7 +125,7 @@ const seedDatabase = async () => {
                 where: { email: 'teacher1@example.com' },
                 defaults: {
                     id: 'GV001',
-                    ten: 'Thầy Nguyễn Văn A',
+                    ten: ' Nguyễn Văn A',
                     email: 'teacher1@example.com',
                     password: hashedPassword,
                     role: 'giangVien',
@@ -136,7 +136,7 @@ const seedDatabase = async () => {
                 where: { email: 'teacher2@example.com' },
                 defaults: {
                     id: 'GV002',
-                    ten: 'Thầy Trần Văn B',
+                    ten: ' Trần Văn B',
                     email: 'teacher2@example.com',
                     password: hashedPassword,
                     role: 'giangVien',
@@ -147,7 +147,7 @@ const seedDatabase = async () => {
                 where: { email: 'teacher3@example.com' },
                 defaults: {
                     id: 'GV003',
-                    ten: 'Thầy Lê Văn C',
+                    ten: 'Lê Văn C',
                     email: 'teacher3@example.com',
                     password: hashedPassword,
                     role: 'giangVien',
