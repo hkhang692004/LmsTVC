@@ -16,7 +16,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
     
      if (myClass?.chuDes || myClass?.baiKiemTras) {
        const currentPath = location.pathname;
-       console.log("Breadcrumb useEffect - current path:", currentPath);
+      
        
        // Extract content ID from URL
        const urlMatch = currentPath.match(/\/(forum|assignment|test|directory)\/([A-Z0-9]+)/i);
@@ -24,7 +24,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
          const contentId = urlMatch[2]; // String ID like "ND004"
          const contentType = urlMatch[1].toLowerCase();
          
-         console.log("Found URL match - Type:", contentType, "ID:", contentId);
+     
          
          // Search for this content in myClass topics
          if (myClass.chuDes) {
@@ -33,7 +33,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
              const found = topic.noiDungs?.find(nd => String(nd.id) === contentId);
              if (found) {
                foundContent = found;
-               console.log("Found content in topics:", found);
+               
                break;
              }
            }
@@ -47,7 +47,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
                text: foundContent.noiDung,
                chiTiets: foundContent.files || []
              };
-             console.log("Setting selectedContent to:", contentToSet);
+             
              setSelectedContent(contentToSet);
              return;
            }
@@ -57,7 +57,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
          if (myClass.baiKiemTras) {
            const foundExam = myClass.baiKiemTras.find(exam => String(exam.id) === contentId);
            if (foundExam) {
-             console.log("Found exam:", foundExam);
+             
              const examToSet = {
                id: foundExam.id,
                ten: foundExam.tieuDe,
@@ -66,7 +66,7 @@ const Breadcrumb = ({ courseName, itemName }) => {
                thoiGianBatDau: foundExam.thoiGianBatDau,
                thoiGianKetThuc: foundExam.thoiGianKetThuc
              };
-             console.log("Setting selectedContent to exam:", examToSet);
+             
              setSelectedContent(examToSet);
              return;
            }

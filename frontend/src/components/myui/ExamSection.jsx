@@ -30,14 +30,13 @@ const ExamSection = ({ classId, isTeacher }) => {
     const fetchExams = async () => {
         try {
             setLoading(true);
-            console.log('📚 [Frontend] Fetching exams for classId:', classId);
+            
             const response = await axiosClient.get(`/api/exams`, {
                 params: { lopId: classId }
             });
-            console.log(' [Frontend] API response status:', response.status);
-            console.log(' [Frontend] response.data:', response.data);
+       
             const examsData = response.data?.data || [];
-            console.log(' [Frontend] Setting exams with count:', examsData.length);
+            
             setExams(examsData);
             setError(null);
         } catch (err) {

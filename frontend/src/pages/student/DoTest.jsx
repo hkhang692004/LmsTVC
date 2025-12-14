@@ -66,13 +66,12 @@ const DoTest = () => {
                 
                 if (Object.keys(loadedAnswers).length > 0) {
                     setAnswers(loadedAnswers);
-                    console.log('Loaded saved answers:', loadedAnswers);
+                   
                 }
                 
             } catch (error) {
                 console.error('Error starting exam:', error);
-                console.log('Error response:', error.response?.data);
-                console.log('Error status:', error.response?.status);
+                
                 const status = error.response?.status;
                 const errorMsg = error.response?.data?.message || 'Không thể bắt đầu bài kiểm tra';
                 

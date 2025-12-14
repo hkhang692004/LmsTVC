@@ -5,8 +5,10 @@ import ScrollToTop from '@/components/myui/ScrollToTop'
 import ContentList from '@/components/myui/ContentList'
 import CourseSidebar, { SidebarToggle } from '@/components/myui/CourseSidebar'
 import AddTopicDialog from '@/components/myui/AddTopicDialog'
+import StudentList from '@/components/myui/StudentList'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { useParams } from 'react-router-dom'
 import classService from '@/services/classService'
@@ -28,8 +30,7 @@ const MyContent = () => {
     try {
       const response = await classService.getClassById(id);
       const classData = response.data?.data || [];
-      console.log("Class data received:", classData);
-      console.log("chuDes:", classData.chuDes);
+    
       setMyClass(classData);
       setSelectedClass(classData);
       setMyClassStore(classData); // Persist vào store
@@ -87,9 +88,27 @@ const MyContent = () => {
                   </Button>
                 )}
               </div>
-              <div className='border rounded-lg border-gray-300 p-4'>
-                <ContentList myClass={myClass} isTeacher={isTeacher} onRefresh={fetchMyClass}/>
-              </div>
+              
+              {isTeacher ? (
+                <Tabs defaultValue="content" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 max-w-md">
+                    <TabsTrigger value="content">Nội dung</TabsTrigger>
+                    <TabsTrigger value="students">Danh sách sinh viên</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="content" className="mt-6">
+                    <div className='border rounded-lg border-gray-300 p-4'>
+                      <ContentList myClass={myClass} isTeacher={isTeacher} onRefresh={fetchMyClass}/>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="students" className="mt-6">
+                    <StudentList classId={id} />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className='border rounded-lg border-gray-300 p-4'>
+                  <ContentList myClass={myClass} isTeacher={isTeacher} onRefresh={fetchMyClass}/>
+                </div>
+              )}
             </div>
           </div>
         </div>

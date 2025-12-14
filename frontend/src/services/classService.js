@@ -8,6 +8,9 @@ const classService = {
     getClassById:(id) =>{
         return axiosClient.get(`/api/classes/${id}`);
     },
+    getStudentsInClass:(classId) =>{
+        return axiosClient.get(`/api/classes/${classId}/students`);
+    },
 
 };
 

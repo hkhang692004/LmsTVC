@@ -41,8 +41,8 @@ const CirclesPattern = ({ id, opacity }) => (
 )
 
 
-const CourseCard = ({ course, index }) => {
-    const style = courseStyles[index % courseStyles.length]
+const CourseCard = ({ course, index = 0 }) => {
+    const style = courseStyles[index % courseStyles.length] || courseStyles[0]
     const patternId = `pattern-${index}`
     const setSelectedClass = useClassStore(state => state.setSelectedClass);
     const navigate = useNavigate();
@@ -54,17 +54,17 @@ const CourseCard = ({ course, index }) => {
     }
 
     const renderPattern = () => {
-        switch (style.pattern) {
+        switch (style?.pattern) {
             case 'hexagon': return <HexagonPattern id={patternId} opacity={style.patternOpacity} />
             case 'diamond': return <DiamondPattern id={patternId} opacity={style.patternOpacity} />
             case 'circles': return <CirclesPattern id={patternId} opacity={style.patternOpacity} />
-            default: return <CirclesPattern id={patternId} opacity={style.patternOpacity} />
+            default: return <CirclesPattern id={patternId} opacity={style?.patternOpacity || 0.15} />
         }
     }
     return (
         <a className='block' onClick={handleClick}>
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 h-60 mx-2">
-                <div className={`h-32 relative overflow-hidden ${style.color}`}>
+                <div className={`h-32 relative overflow-hidden ${style?.color || 'bg-blue-500'}`}>
                     <svg className="absolute inset-0 w-full h-full text-white" >
                         <defs>{renderPattern()}</defs>
                         <rect width="100%" height="100%" fill={`url(#${patternId})`} />

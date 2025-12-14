@@ -64,7 +64,7 @@ const Profile = () => {
             const formData = new FormData();
             formData.append('avatar', avatarFile);
 
-            console.log('Uploading avatar...', avatarFile.name);
+            
 
             const response = await axiosClient.put('/api/users/profile', formData, {
                 headers: {
@@ -72,7 +72,7 @@ const Profile = () => {
                 }
             });
 
-            console.log('Upload response:', response.data);
+            
 
             const updatedUser = response.data?.data;
             
@@ -91,7 +91,7 @@ const Profile = () => {
                     if (latestUser) {
                         setUser(latestUser);
                         setAvatarPreview(latestUser.avatar);
-                        console.log('User data reloaded:', latestUser);
+                       
                     }
                 } catch (reloadError) {
                     console.error('Failed to reload user data:', reloadError);

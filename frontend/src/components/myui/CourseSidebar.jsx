@@ -30,9 +30,7 @@ const SidebarSection = ({ title, items, isOpen, onToggle }) => {
   const handleItemClick = (item) => {
     const type = item.loaiNoiDung || item.type;
     
-    console.log("Item clicked:", item);
-    console.log("Item type:", type);
-    console.log("Item chiTiets:", item.chiTiets);
+  
     
     // Kiểm tra nếu là YouTube video
     const isYouTube = item.chiTiets && item.chiTiets.length > 0 &&
@@ -54,12 +52,10 @@ const SidebarSection = ({ title, items, isOpen, onToggle }) => {
     // Xử lý các loại khác
     switch (type) {
       case "taiLieu":
-        console.log("Processing taiLieu");
+        
         if (item.chiTiets && item.chiTiets.length > 0) {
           const detail = item.chiTiets[0];
-          console.log("Detail:", detail);
-          console.log("Detail loaiChiTiet:", detail.loaiChiTiet);
-          console.log("Detail filePath:", detail.filePath);
+         
           
           // File (PDF, Word, ...) - Chỉ mở file, không update breadcrumb
           if (detail.loaiChiTiet === 'file') {
@@ -169,7 +165,7 @@ const CourseSidebar = ({ isOpen, onClose, myClass = {} }) => {
           const response = await axiosClient.get(`/api/exams`, {
             params: { lopId: classId }
           });
-          console.log('✅ Exams fetched:', response.data?.data);
+        
           setBaiKiemTras(response.data?.data || []);
         } catch (error) {
           console.error('❌ Error fetching exams:', error);
@@ -181,9 +177,7 @@ const CourseSidebar = ({ isOpen, onClose, myClass = {} }) => {
 
   // Xây dựng sections từ API data
   const sections = useMemo(() => {
-    console.log("CourseSidebar classData:", classData);
-    console.log("chuDes data:", classData.chuDes);
-    console.log("baiKiemTras data:", baiKiemTras);
+  
     
     const allSections = [];
 

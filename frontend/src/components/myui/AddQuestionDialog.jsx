@@ -156,8 +156,7 @@ const AddQuestionDialog = ({ open, onOpenChange, examId, question, onSuccess }) 
 
         setIsSubmitting(true);
         try {
-            console.log('🔍 [DEBUG] examId:', examId);
-            console.log('🔍 [DEBUG] question?.id:', question?.id);
+            
             
             const questionData = {
                 noiDung: noiDung.trim(),
@@ -179,18 +178,18 @@ const AddQuestionDialog = ({ open, onOpenChange, examId, question, onSuccess }) 
                 console.log('ℹ️ [DEBUG] Editing existing question, not adding idBaiKiemTra');
             }
 
-            console.log('📤 [DEBUG] Final questionData:', JSON.stringify(questionData, null, 2));
+            
 
             if (question?.id) {
                 // Update existing question
-                console.log('🔄 [DEBUG] Updating question:', question.id);
+               
                 await axiosClient.put(`/api/exams/questions/${question.id}`, questionData);
                 toast.success('Đã cập nhật câu hỏi');
             } else {
                 // Create new question
-                console.log('➕ [DEBUG] Creating new question for exam:', examId);
+              
                 const response = await axiosClient.post(`/api/exams/${examId}/questions`, questionData);
-                console.log('✅ [DEBUG] Create response:', response.data);
+               
                 toast.success('Đã thêm câu hỏi');
             }
 
@@ -200,11 +199,7 @@ const AddQuestionDialog = ({ open, onOpenChange, examId, question, onSuccess }) 
                 onSuccess();
             }
         } catch (error) {
-            console.error('❌ [DEBUG] Error saving question:', error);
-            console.error('❌ [DEBUG] Error response:', error.response?.data);
-            console.error('❌ [DEBUG] Error message:', error.response?.data?.message);
-            console.error('❌ [DEBUG] Error status:', error.response?.status);
-            console.error('❌ [DEBUG] Full error response:', JSON.stringify(error.response?.data, null, 2));
+            console.error('Error saving question:', error);
             toast.error(error.response?.data?.message || 'Không thể lưu câu hỏi');
         } finally {
             setIsSubmitting(false);

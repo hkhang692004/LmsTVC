@@ -45,7 +45,7 @@ const TestExercise = () => {
             try {
                 setLoading(true);
                 const response = await examService.getExamStudentView(testId);
-                console.log('Exam data:', response.data?.data);
+                
                 setExam(response.data?.data);
             } catch (error) {
                 console.error('Error fetching exam:', error);
@@ -68,7 +68,7 @@ const TestExercise = () => {
             try {
                 setLoading(true);
                 const response = await examService.getExamSubmissions(testId, currentPage, limit);
-                console.log('Exam submissions:', response.data);
+                
                 setSubmissions(response.data?.data || []);
                 setTotalSubmissions(response.data?.pagination?.total || 0);
                 setTotalPages(response.data?.pagination?.totalPages || 1);

@@ -175,11 +175,11 @@ const ForumContent = () => {
           // Endpoint trả về object với post và replies
           if (data) {
             if (data.post) {
-              console.log('[ForumContent] Fetched post:', data.post);
+            
               setPost(data.post);
             }
             if (data.replies) {
-              console.log('[ForumContent] Fetched replies:', data.replies);
+              
               setReplies(data.replies || []);
             }
           }
@@ -327,7 +327,7 @@ const ForumContent = () => {
                   ref={postRef}
                   className="bg-white rounded-lg shadow border border-gray-200 p-6"
                 >
-                  {console.log('[ForumContent] Rendering post:', { id: post.id, tieuDe: post.tieuDe, title: post.title, nguoiTao: post.nguoiTao?.ten })}
+                 
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
                       <FaUser className="w-6 h-6 text-gray-600" />

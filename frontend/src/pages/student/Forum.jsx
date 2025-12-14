@@ -55,7 +55,7 @@ const Forum = () => {
           const parentContent = contentResponse.data?.data;
           if (parentContent?.idChuDe) {
             setTopicId(parentContent.idChuDe);
-            console.log('Topic ID from parent content:', parentContent.idChuDe);
+           
           }
           
           // Fetch posts - use /posts endpoint for direct children only
