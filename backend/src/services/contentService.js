@@ -174,6 +174,20 @@ class ContentService {
                 });
             }
 
+            // Handle folder creation
+            if (contentData.fileType === 'folder') {
+                console.log('[ContentService] Folder detected, creating folder detail');
+                const folderId = await this.generateContentDetailId();
+                fileDetails.push({
+                    id: folderId,
+                    loaiChiTiet: 'thuMuc',
+                    filePath: null,
+                    fileName: contentData.tieuDe,
+                    fileType: 'folder',
+                    fileSize: 0
+                });
+            }
+
             // Create content with files in transaction
             console.log('[ContentService] Creating content with repository...');
             const result = await ContentRepository.createContentWithFiles(newContentData, fileDetails);

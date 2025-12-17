@@ -32,7 +32,7 @@ const UploadAssignment = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalSubmissions, setTotalSubmissions] = useState(0);
-    const limit = 1; // Số bài nộp mỗi trang - set 1 để dễ test phân trang
+    const limit = 1; 
 
     // COUNTDOWN
     const [timeLeft, setTimeLeft] = useState("");

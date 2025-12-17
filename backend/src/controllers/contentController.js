@@ -87,7 +87,8 @@ class ContentController {
             hanNop: req.body.hanNop,
             status: req.body.status,
             videoUrl: req.body.videoUrl, // Youtube URL if provided
-            linkUrl: req.body.linkUrl // External link URL if provided
+            linkUrl: req.body.linkUrl, // External link URL if provided
+            fileType: req.body.fileType // 'folder' if creating a folder
         };
 
         const files = req.files || [];

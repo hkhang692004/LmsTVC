@@ -16,6 +16,7 @@ import AddVideoDialog from "./AddVideoDialog";
 import AddForumDialog from "./AddForumDialog";
 import AddAssignmentDialog from "./AddAssignmentDialog";
 import AddLinkDialog from "./AddLinkDialog";
+import AddFolderDialog from "./AddFolderDialog";
 
 
 const ContentSection = ({ title, items, isTeacher, topicId, onContentAdded }) => {
@@ -25,6 +26,7 @@ const ContentSection = ({ title, items, isTeacher, topicId, onContentAdded }) =>
     const [forumDialogOpen, setForumDialogOpen] = useState(false);
     const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [folderDialogOpen, setFolderDialogOpen] = useState(false);
     const [editingTitle, setEditingTitle] = useState(false);
     const [newTitle, setNewTitle] = useState(title);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -147,6 +149,12 @@ const ContentSection = ({ title, items, isTeacher, topicId, onContentAdded }) =>
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
+                                setFolderDialogOpen(true);
+                            }}>
+                                📁 Thư mục
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
                                 setDocumentDialogOpen(true);
                             }}>
                                 📄 Tài liệu (PDF, DOCX, ...)
@@ -211,6 +219,12 @@ const ContentSection = ({ title, items, isTeacher, topicId, onContentAdded }) =>
         {/* Dialogs */}
         {isTeacher && (
             <>
+                <AddFolderDialog
+                    open={folderDialogOpen}
+                    onOpenChange={setFolderDialogOpen}
+                    topicId={topicId}
+                    onSuccess={onContentAdded}
+                />
                 <AddDocumentDialog
                     open={documentDialogOpen}
                     onOpenChange={setDocumentDialogOpen}

@@ -10,7 +10,7 @@ const useClassStore = create(
             selectedClass: null,
             selectedContent: null,
             myClass: null,
-            classId: null,  // Store classId for back navigation
+            classId: null,  
             error: null,
             
 
